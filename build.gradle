@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+repositories {
+    mavenCentral()
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'test.AXMLPrinter'
+    }
+}
