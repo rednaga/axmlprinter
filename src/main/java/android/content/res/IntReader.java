@@ -27,178 +27,149 @@ import java.io.InputStream;
  */
 public final class IntReader {
 
-  private InputStream stream;
-  private boolean bigEndian;
-  private int position;
+    private InputStream stream;
+    private boolean bigEndian;
 
-  public IntReader() {}
-
-  public IntReader(InputStream stream, boolean bigEndian) {
-    reset(stream, bigEndian);
-  }
-
-  /**
-   * Reset the POJO to use a new stream.
-   * 
-   * @param newStream the {@code InputStream} to use
-   * @param isBigEndian a boolean for whether or not the stream is in Big Endian format
-   */
-  public final void reset(InputStream newStream, boolean isBigEndian) {
-    stream = newStream;
-    bigEndian = isBigEndian;
-    position = 0;
-  }
-
-  /**
-   * Close the current stream being used by the POJO.
-   */
-  public final void close() {
-    if (stream == null) {
-      return;
+    public IntReader(InputStream stream, boolean bigEndian) {
+        reset(stream, bigEndian);
     }
 
-    try {
-      stream.close();
-    } catch (IOException e) {
-      e.printStackTrace();
+    /**
+     * Reset the POJO to use a new stream.
+     * 
+     * @param newStream
+     *            the {@code InputStream} to use
+     * @param isBigEndian
+     *            a boolean for whether or not the stream is in Big Endian format
+     */
+    public final void reset(InputStream newStream, boolean isBigEndian) {
+        stream = newStream;
+        bigEndian = isBigEndian;
     }
 
-    reset(null, false);
-  }
+    /**
+     * Close the current stream being used by the POJO.
+     */
+    public final void close() {
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-  public final InputStream getStream() {
-    return stream;
-  }
-
-  public final boolean isBigEndian() {
-    return bigEndian;
-  }
-
-  public final void setBigEndian(boolean isBigEndian) {
-    bigEndian = isBigEndian;
-  }
-
-  public final int readByte() throws IOException {
-    return readInt(1);
-  }
-
-  public final int readShort() throws IOException {
-    return readInt(2);
-  }
-
-  public final int readInt() throws IOException {
-    return readInt(4);
-  }
-
-  /**
-   * Read an integer of a certain length from the current stream.
-   * 
-   * @param length to read
-   * @return
-   * @throws IOException
-   */
-  public final int readInt(int length) throws IOException {
-    if ((length < 0) || (length > 4)) {
-      throw new IllegalArgumentException();
-    }
-    int result = 0;
-    int byteRead = 0;
-    if (bigEndian) {
-      for (int i = (length - 1) * 8; i >= 0; i -= 8) {
-        byteRead = stream.read();
-        if (byteRead == -1) {
-          throw new EOFException();
+            reset(null, false);
         }
-        position += 1;
-        result |= (byteRead << i);
-      }
-    } else {
-      length *= 8;
-      for (int i = 0; i != length; i += 8) {
-        byteRead = stream.read();
-        if (byteRead == -1) {
-          throw new EOFException();
+    }
+
+    public final int readByte() throws IOException {
+        return readInt(1);
+    }
+
+    public final int readShort() throws IOException {
+        return readInt(2);
+    }
+
+    public final int readInt() throws IOException {
+        return readInt(4);
+    }
+
+    /**
+     * Read an integer of a certain length from the current stream.
+     * 
+     * @param length
+     *            to read
+     * @return
+     * @throws IOException
+     */
+    public final int readInt(int length) throws IOException {
+        if ((length < 0) || (length > 4)) {
+            throw new IllegalArgumentException();
         }
-        position += 1;
-        result |= (byteRead << i);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Return an integer array of a certain length from current offset.
-   * 
-   * @param length
-   * @return
-   * @throws IOException
-   */
-  public final int[] readIntArray(int length) throws IOException {
-    int[] array = new int[length];
-
-    readIntArray(array, 0, length);
-
-    return array;
-  }
-
-  /**
-   * Read (store) an integer array of a specific length and offset.
-   * 
-   * @param array
-   * @param offset
-   * @param length
-   * @throws IOException
-   */
-  public final void readIntArray(int[] array, int offset, int length) throws IOException {
-    for (; length > 0; length -= 1) {
-      array[offset++] = readInt();
-    }
-  }
-
-  /**
-   * Read and return a byte array of a specific length.
-   * 
-   * @param length
-   * @return
-   * @throws IOException
-   */
-  public final byte[] readByteArray(int length) throws IOException {
-    byte[] array = new byte[length];
-    int read = stream.read(array);
-    position += read;
-
-    if (read != length) {
-      throw new EOFException();
+        int result = 0;
+        int byteRead = 0;
+        if (bigEndian) {
+            for (int i = (length - 1) * 8; i >= 0; i -= 8) {
+                byteRead = stream.read();
+                if (byteRead == -1) {
+                    throw new EOFException();
+                }
+                result |= (byteRead << i);
+            }
+        } else {
+            length *= 8;
+            for (int i = 0; i != length; i += 8) {
+                byteRead = stream.read();
+                if (byteRead == -1) {
+                    throw new EOFException();
+                }
+                result |= (byteRead << i);
+            }
+        }
+        return result;
     }
 
-    return array;
-  }
+    /**
+     * Return an integer array of a certain length from current offset.
+     * 
+     * @param length
+     * @return
+     * @throws IOException
+     */
+    public final int[] readIntArray(int length) throws IOException {
+        int[] array = new int[length];
 
-  /**
-   * Skip a specific number of bytes in the stream.
-   * 
-   * @param bytes
-   * @throws IOException
-   */
-  public final void skip(int bytes) throws IOException {
-    if (bytes > 0) {
-      long skipped = stream.skip(bytes);
-      position += skipped;
-      if (skipped != bytes) {
-        throw new EOFException();
-      }
+        readIntArray(array, 0, length);
+
+        return array;
     }
-  }
 
-  public final void skipInt() throws IOException {
-    skip(4);
-  }
+    /**
+     * Read (store) an integer array of a specific length and offset.
+     * 
+     * @param array
+     * @param offset
+     * @param length
+     * @throws IOException
+     */
+    public final void readIntArray(int[] array, int offset, int length) throws IOException {
+        for (; length > 0; length -= 1) {
+            array[offset++] = readInt();
+        }
+    }
 
-  public final int available() throws IOException {
-    return stream.available();
-  }
+    /**
+     * Read and return a byte array of a specific length.
+     * 
+     * @param length
+     * @return
+     * @throws IOException
+     */
+    public final byte[] readByteArray(int length) throws IOException {
+        byte[] array = new byte[length];
 
-  public final int getPosition() {
-    return position;
-  }
+        if (stream.read(array) != length) {
+            throw new EOFException();
+        }
+
+        return array;
+    }
+
+    /**
+     * Skip a specific number of bytes in the stream.
+     * 
+     * @param bytes
+     * @throws IOException
+     */
+    public final void skip(int bytes) throws IOException {
+        if (bytes > 0) {
+            if (stream.skip(bytes) != bytes) {
+                throw new EOFException();
+            }
+        }
+    }
+
+    public final void skipInt() throws IOException {
+        skip(4);
+    }
 }
