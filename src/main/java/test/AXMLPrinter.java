@@ -28,6 +28,12 @@ import android.util.TypedValue;
  *         Prints xml document from Android's binary xml file.
  */
 public class AXMLPrinter {
+
+  private static final float RADIX_MULTS[] = {0.00390625F, 3.051758E-005F, 1.192093E-007F,
+      4.656613E-010F};
+  private static final String DIMENSION_UNITS[] = {"px", "dip", "sp", "pt", "in", "mm", "", ""};
+  private static final String FRACTION_UNITS[] = {"%", "%p", "", "", "", "", "", ""};
+
   public static void main(String[] arguments) {
     if (arguments.length < 1) {
       log("Usage: AXMLPrinter <binary xml file>");
@@ -144,9 +150,4 @@ public class AXMLPrinter {
   public static float complexToFloat(int complex) {
     return (complex & 0xFFFFFF00) * RADIX_MULTS[(complex >> 4) & 3];
   }
-
-  private static final float RADIX_MULTS[] = {0.00390625F, 3.051758E-005F, 1.192093E-007F,
-      4.656613E-010F};
-  private static final String DIMENSION_UNITS[] = {"px", "dip", "sp", "pt", "in", "mm", "", ""};
-  private static final String FRACTION_UNITS[] = {"%", "%p", "", "", "", "", "", ""};
 }

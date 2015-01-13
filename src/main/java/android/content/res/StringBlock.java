@@ -25,6 +25,14 @@ import java.io.IOException;
  */
 public class StringBlock {
 
+
+  private int[] stringOffsets;
+  private int[] strings;
+  private int[] styleOffsets;
+  private int[] styles;
+
+  private static final int CHUNK_TYPE = 0x001C0001;
+
   /**
    * Reads whole (including chunk type) string block from stream. Stream must be at the chunk type.
    */
@@ -38,23 +46,23 @@ public class StringBlock {
     int stylesOffset = reader.readInt();
 
     StringBlock block = new StringBlock();
-    block.m_stringOffsets = reader.readIntArray(stringCount);
+    block.stringOffsets = reader.readIntArray(stringCount);
     if (styleOffsetCount != 0) {
-      block.m_styleOffsets = reader.readIntArray(styleOffsetCount);
+      block.styleOffsets = reader.readIntArray(styleOffsetCount);
     }
     {
       int size = ((stylesOffset == 0) ? chunkSize : stylesOffset) - stringsOffset;
       if ((size % 4) != 0) {
         throw new IOException("String data size is not multiple of 4 (" + size + ").");
       }
-      block.m_strings = reader.readIntArray(size / 4);
+      block.strings = reader.readIntArray(size / 4);
     }
     if (stylesOffset != 0) {
       int size = (chunkSize - stylesOffset);
       if ((size % 4) != 0) {
         throw new IOException("Style data size is not multiple of 4 (" + size + ").");
       }
-      block.m_styles = reader.readIntArray(size / 4);
+      block.styles = reader.readIntArray(size / 4);
     }
 
     return block;
@@ -64,22 +72,22 @@ public class StringBlock {
    * Returns number of strings in block.
    */
   public int getCount() {
-    return m_stringOffsets != null ? m_stringOffsets.length : 0;
+    return stringOffsets != null ? stringOffsets.length : 0;
   }
 
   /**
    * Returns raw string (without any styling information) at specified index.
    */
   public String getString(int index) {
-    if ((index < 0) || (m_stringOffsets == null) || (index >= m_stringOffsets.length)) {
+    if ((index < 0) || (stringOffsets == null) || (index >= stringOffsets.length)) {
       return null;
     }
-    int offset = m_stringOffsets[index];
-    int length = getShort(m_strings, offset);
+    int offset = stringOffsets[index];
+    int length = getShort(strings, offset);
     StringBuilder result = new StringBuilder(length);
     for (; length != 0; length -= 1) {
       offset += 2;
-      result.append((char) getShort(m_strings, offset));
+      result.append((char) getShort(strings, offset));
     }
     return result.toString();
   }
@@ -155,16 +163,16 @@ public class StringBlock {
     if (string == null) {
       return -1;
     }
-    for (int i = 0; i != m_stringOffsets.length; ++i) {
-      int offset = m_stringOffsets[i];
-      int length = getShort(m_strings, offset);
+    for (int i = 0; i != stringOffsets.length; ++i) {
+      int offset = stringOffsets[i];
+      int length = getShort(strings, offset);
       if (length != string.length()) {
         continue;
       }
       int j = 0;
       for (; j != length; ++j) {
         offset += 2;
-        if (string.charAt(j) != getShort(m_strings, offset)) {
+        if (string.charAt(j) != getShort(strings, offset)) {
           break;
         }
       }
@@ -185,15 +193,15 @@ public class StringBlock {
    * index in string
    */
   private int[] getStyle(int index) {
-    if ((m_styleOffsets == null) || (m_styles == null) || (index >= m_styleOffsets.length)) {
+    if ((styleOffsets == null) || (styles == null) || (index >= styleOffsets.length)) {
       return null;
     }
-    int offset = m_styleOffsets[index] / 4;
+    int offset = styleOffsets[index] / 4;
     int style[];
     {
       int count = 0;
-      for (int i = offset; i < m_styles.length; ++i) {
-        if (m_styles[i] == -1) {
+      for (int i = offset; i < styles.length; ++i) {
+        if (styles[i] == -1) {
           break;
         }
         count += 1;
@@ -203,11 +211,11 @@ public class StringBlock {
       }
       style = new int[count];
     }
-    for (int i = offset, j = 0; i < m_styles.length;) {
-      if (m_styles[i] == -1) {
+    for (int i = offset, j = 0; i < styles.length;) {
+      if (styles[i] == -1) {
         break;
       }
-      style[j++] = m_styles[i++];
+      style[j++] = styles[i++];
     }
     return style;
   }
@@ -220,11 +228,4 @@ public class StringBlock {
       return (value >>> 16);
     }
   }
-
-  private int[] m_stringOffsets;
-  private int[] m_strings;
-  private int[] m_styleOffsets;
-  private int[] m_styles;
-
-  private static final int CHUNK_TYPE = 0x001C0001;
 }
