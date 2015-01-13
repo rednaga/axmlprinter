@@ -2,9 +2,17 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
 
-repositories {
-  mavenCentral()
+buildscript {
+  repositories {
+    mavenCentral()
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.1'
+  }
 }
 
 checkstyle {
@@ -12,12 +20,14 @@ checkstyle {
 }
 
 allprojects {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+
   tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:unchecked"
   }
-
-  sourceCompatibility = '1.6'
-  targetCompatibility = '1.6'
 }
 
 jacocoTestReport {
