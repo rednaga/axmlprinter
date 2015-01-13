@@ -11,11 +11,13 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package android.util;
 
 /**
- * @author Dmitry Skiba
+ * Interface for functionality that will be provided for attributes.
  * 
+ * @author Dmitry Skiba
  */
 public interface AttributeSet {
   int getAttributeCount();
@@ -24,19 +26,33 @@ public interface AttributeSet {
 
   String getAttributeValue(int index);
 
+  String getAttributeValue(String namespace, String attribute);
+
   String getPositionDescription();
 
   int getAttributeNameResource(int index);
 
-  int getAttributeListValue(int index, String options[], int defaultValue);
+  int getAttributeListValue(String namespace, String attribute, String[] options, int defaultValue);
+
+  int getAttributeListValue(int index, String[] options, int defaultValue);
 
   boolean getAttributeBooleanValue(int index, boolean defaultValue);
 
+  boolean getAttributeBooleanValue(String namespace, String attribute, boolean defaultValue);
+
+  int getAttributeResourceValue(String namespace, String attribute, int defaultValue);
+
   int getAttributeResourceValue(int index, int defaultValue);
+
+  int getAttributeIntValue(String namespace, String attribute, int defaultValue);
 
   int getAttributeIntValue(int index, int defaultValue);
 
+  int getAttributeUnsignedIntValue(String namespace, String attribute, int defaultValue);
+
   int getAttributeUnsignedIntValue(int index, int defaultValue);
+
+  float getAttributeFloatValue(String namespace, String attribute, float defaultValue);
 
   float getAttributeFloatValue(int index, float defaultValue);
 
@@ -47,20 +63,6 @@ public interface AttributeSet {
   int getIdAttributeResourceValue(int index);
 
   int getStyleAttribute();
-
-  String getAttributeValue(String namespace, String attribute);
-
-  int getAttributeListValue(String namespace, String attribute, String options[], int defaultValue);
-
-  boolean getAttributeBooleanValue(String namespace, String attribute, boolean defaultValue);
-
-  int getAttributeResourceValue(String namespace, String attribute, int defaultValue);
-
-  int getAttributeIntValue(String namespace, String attribute, int defaultValue);
-
-  int getAttributeUnsignedIntValue(String namespace, String attribute, int defaultValue);
-
-  float getAttributeFloatValue(String namespace, String attribute, float defaultValue);
 
   // TODO: remove
   int getAttributeValueType(int index);
