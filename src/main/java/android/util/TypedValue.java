@@ -11,11 +11,13 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package android.util;
 
 /**
- * @author Dmitry Skiba
+ * POJO and enums for typed values.
  * 
+ * @author Dmitry Skiba
  */
 public class TypedValue {
 
@@ -31,7 +33,8 @@ public class TypedValue {
   public static final int TYPE_ATTRIBUTE = 2;
   public static final int TYPE_STRING = 3;
   public static final int TYPE_FLOAT = 4;
-  public static final int TYPE_DIMENSION = 5, TYPE_FRACTION = 6;
+  public static final int TYPE_DIMENSION = 5;
+  public static final int TYPE_FRACTION = 6;
   public static final int TYPE_FIRST_INT = 16;
   public static final int TYPE_INT_DEC = 16;
   public static final int TYPE_INT_HEX = 17;
