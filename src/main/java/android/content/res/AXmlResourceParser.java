@@ -506,39 +506,45 @@ public class AXmlResourceParser implements XmlResourceParser {
    * 
    */
   private static final class NamespaceStack {
+
+    private int[] data;
+    private int dataLength;
+    private int count;
+    private int depth;
+
     public NamespaceStack() {
-      m_data = new int[32];
+      data = new int[32];
     }
 
     public final void reset() {
-      m_dataLength = 0;
-      m_count = 0;
-      m_depth = 0;
+      dataLength = 0;
+      count = 0;
+      depth = 0;
     }
 
     public final int getTotalCount() {
-      return m_count;
+      return count;
     }
 
     public final int getCurrentCount() {
-      if (m_dataLength == 0) {
+      if (dataLength == 0) {
         return 0;
       }
-      int offset = m_dataLength - 1;
-      return m_data[offset];
+      int offset = dataLength - 1;
+      return data[offset];
     }
 
-    public final int getAccumulatedCount(int depth) {
-      if ((m_dataLength == 0) || (depth < 0)) {
+    public final int getAccumulatedCount(int currentDepth) {
+      if ((dataLength == 0) || (currentDepth < 0)) {
         return 0;
       }
-      if (depth > m_depth) {
-        depth = m_depth;
+      if (currentDepth > depth) {
+        currentDepth = depth;
       }
       int accumulatedCount = 0;
       int offset = 0;
-      for (; depth != 0; --depth) {
-        int count = m_data[offset];
+      for (; currentDepth != 0; --currentDepth) {
+        int count = data[offset];
         accumulatedCount += count;
         offset += (2 + (count * 2));
       }
@@ -546,64 +552,64 @@ public class AXmlResourceParser implements XmlResourceParser {
     }
 
     public final void push(int prefix, int uri) {
-      if (m_depth == 0) {
+      if (depth == 0) {
         increaseDepth();
       }
       ensureDataCapacity(2);
-      int offset = m_dataLength - 1;
-      int count = m_data[offset];
-      m_data[offset - 1 - (count * 2)] = count + 1;
-      m_data[offset] = prefix;
-      m_data[offset + 1] = uri;
-      m_data[offset + 2] = count + 1;
-      m_dataLength += 2;
-      m_count += 1;
+      int offset = dataLength - 1;
+      int localCount = data[offset];
+      data[offset - 1 - (localCount * 2)] = localCount + 1;
+      data[offset] = prefix;
+      data[offset + 1] = uri;
+      data[offset + 2] = localCount + 1;
+      dataLength += 2;
+      count += 1;
     }
 
     public final boolean pop(int prefix, int uri) {
-      if (m_dataLength == 0) {
+      if (dataLength == 0) {
         return false;
       }
-      int offset = m_dataLength - 1;
-      int count = m_data[offset];
-      for (int i = 0, o = offset - 2; i != count; ++i, o -= 2) {
-        if ((m_data[o] != prefix) || (m_data[o + 1] != uri)) {
+      int offset = dataLength - 1;
+      int localCount = data[offset];
+      for (int i = 0, o = offset - 2; i != localCount; ++i, o -= 2) {
+        if ((data[o] != prefix) || (data[o + 1] != uri)) {
           continue;
         }
-        count -= 1;
+        localCount -= 1;
         if (i == 0) {
-          m_data[o] = count;
-          o -= (1 + (count * 2));
-          m_data[o] = count;
+          data[o] = localCount;
+          o -= (1 + (localCount * 2));
+          data[o] = localCount;
         } else {
-          m_data[offset] = count;
-          offset -= (1 + 2 + (count * 2));
-          m_data[offset] = count;
-          System.arraycopy(m_data, o + 2, m_data, o, m_dataLength - o);
+          data[offset] = localCount;
+          offset -= (1 + 2 + (localCount * 2));
+          data[offset] = localCount;
+          System.arraycopy(data, o + 2, data, o, dataLength - o);
         }
-        m_dataLength -= 2;
-        m_count -= 1;
+        dataLength -= 2;
+        count -= 1;
         return true;
       }
       return false;
     }
 
     public final boolean pop() {
-      if (m_dataLength == 0) {
+      if (dataLength == 0) {
         return false;
       }
-      int offset = m_dataLength - 1;
-      int count = m_data[offset];
-      if (count == 0) {
+      int offset = dataLength - 1;
+      int localCount = data[offset];
+      if (localCount == 0) {
         return false;
       }
-      count -= 1;
+      localCount -= 1;
       offset -= 2;
-      m_data[offset] = count;
-      offset -= (1 + (count * 2));
-      m_data[offset] = count;
-      m_dataLength -= 2;
-      m_count -= 1;
+      data[offset] = localCount;
+      offset -= (1 + (localCount * 2));
+      data[offset] = localCount;
+      dataLength -= 2;
+      count -= 1;
       return true;
     }
 
@@ -624,59 +630,59 @@ public class AXmlResourceParser implements XmlResourceParser {
     }
 
     public final int getDepth() {
-      return m_depth;
+      return depth;
     }
 
     public final void increaseDepth() {
       ensureDataCapacity(2);
-      int offset = m_dataLength;
-      m_data[offset] = 0;
-      m_data[offset + 1] = 0;
-      m_dataLength += 2;
-      m_depth += 1;
+      int offset = dataLength;
+      data[offset] = 0;
+      data[offset + 1] = 0;
+      dataLength += 2;
+      depth += 1;
     }
 
     public final void decreaseDepth() {
-      if (m_dataLength == 0) {
+      if (dataLength == 0) {
         return;
       }
-      int offset = m_dataLength - 1;
-      int count = m_data[offset];
-      if ((offset - 1 - (count * 2)) == 0) {
+      int offset = dataLength - 1;
+      int localCount = data[offset];
+      if ((offset - 1 - (localCount * 2)) == 0) {
         return;
       }
-      m_dataLength -= 2 + (count * 2);
-      m_count -= count;
-      m_depth -= 1;
+      dataLength -= 2 + (localCount * 2);
+      count -= localCount;
+      depth -= 1;
     }
 
     private void ensureDataCapacity(int capacity) {
-      int available = (m_data.length - m_dataLength);
+      int available = (data.length - dataLength);
       if (available > capacity) {
         return;
       }
-      int newLength = (m_data.length + available) * 2;
+      int newLength = (data.length + available) * 2;
       int[] newData = new int[newLength];
-      System.arraycopy(m_data, 0, newData, 0, m_dataLength);
-      m_data = newData;
+      System.arraycopy(data, 0, newData, 0, dataLength);
+      data = newData;
     }
 
     private final int find(int prefixOrUri, boolean prefix) {
-      if (m_dataLength == 0) {
+      if (dataLength == 0) {
         return -1;
       }
-      int offset = m_dataLength - 1;
-      for (int i = m_depth; i != 0; --i) {
-        int count = m_data[offset];
+      int offset = dataLength - 1;
+      for (int i = depth; i != 0; --i) {
+        int count = data[offset];
         offset -= 2;
         for (; count != 0; --count) {
           if (prefix) {
-            if (m_data[offset] == prefixOrUri) {
-              return m_data[offset + 1];
+            if (data[offset] == prefixOrUri) {
+              return data[offset + 1];
             }
           } else {
-            if (m_data[offset + 1] == prefixOrUri) {
-              return m_data[offset];
+            if (data[offset + 1] == prefixOrUri) {
+              return data[offset];
             }
           }
           offset -= 2;
@@ -686,12 +692,12 @@ public class AXmlResourceParser implements XmlResourceParser {
     }
 
     private final int get(int index, boolean prefix) {
-      if ((m_dataLength == 0) || (index < 0)) {
+      if ((dataLength == 0) || (index < 0)) {
         return -1;
       }
       int offset = 0;
-      for (int i = m_depth; i != 0; --i) {
-        int count = m_data[offset];
+      for (int i = depth; i != 0; --i) {
+        int count = data[offset];
         if (index >= count) {
           index -= count;
           offset += (2 + (count * 2));
@@ -701,15 +707,10 @@ public class AXmlResourceParser implements XmlResourceParser {
         if (!prefix) {
           offset += 1;
         }
-        return m_data[offset];
+        return data[offset];
       }
       return -1;
     }
-
-    private int[] m_data;
-    private int m_dataLength;
-    private int m_count;
-    private int m_depth;
   }
 
   // ///////////////////////////////// package-visible

@@ -246,8 +246,8 @@ public class XmlPullParserFactory {
     return newInstance(null, null);
   }
 
-  public static XmlPullParserFactory newInstance(String classNames, Class<? extends XmlPullParserFactory> context)
-      throws XmlPullParserException {
+  public static XmlPullParserFactory newInstance(String classNames,
+      Class<? extends XmlPullParserFactory> context) throws XmlPullParserException {
 
     if (context == null) {
       // NOTE: make sure context uses the same class loader as API classes
