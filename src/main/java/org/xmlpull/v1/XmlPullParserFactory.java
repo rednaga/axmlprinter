@@ -33,7 +33,7 @@ import java.util.Vector;
 
 public class XmlPullParserFactory {
   /** used as default class to server as context class in newInstance() */
-  final static Class referenceContextClass;
+  final static Class<? extends XmlPullParserFactory> referenceContextClass;
 
   static {
     XmlPullParserFactory f = new XmlPullParserFactory();
@@ -53,13 +53,13 @@ public class XmlPullParserFactory {
   // public static final String DEFAULT_PROPERTY =
   // "org.xmlpull.xpp3.XmlPullParser,org.kxml2.io.KXmlParser";
 
-  protected Vector parserClasses;
+  protected Vector<Class> parserClasses;
   protected String classNamesLocation;
 
-  protected Vector serializerClasses;
+  protected Vector<Class> serializerClasses;
 
   // features are kept there
-  protected Hashtable features = new Hashtable();
+  protected Hashtable<String, Boolean> features = new Hashtable<String, Boolean>();
 
   /**
    * Protected constructor to be called by factory implementations.
@@ -92,7 +92,7 @@ public class XmlPullParserFactory {
    */
 
   public boolean getFeature(String name) {
-    Boolean value = (Boolean) features.get(name);
+    Boolean value = features.get(name);
     return value != null ? value.booleanValue() : false;
   }
 
@@ -167,16 +167,16 @@ public class XmlPullParserFactory {
     final StringBuffer issues = new StringBuffer();
 
     for (int i = 0; i < parserClasses.size(); i++) {
-      final Class ppClass = (Class) parserClasses.elementAt(i);
+      final Class ppClass = parserClasses.elementAt(i);
       try {
         final XmlPullParser pp = (XmlPullParser) ppClass.newInstance();
         // if( ! features.isEmpty() ) {
         // Enumeration keys = features.keys();
         // while(keys.hasMoreElements()) {
 
-        for (Enumeration e = features.keys(); e.hasMoreElements();) {
-          final String key = (String) e.nextElement();
-          final Boolean value = (Boolean) features.get(key);
+        for (Enumeration<String> e = features.keys(); e.hasMoreElements();) {
+          final String key = e.nextElement();
+          final Boolean value = features.get(key);
           if ((value != null) && value.booleanValue()) {
             pp.setFeature(key, true);
           }
@@ -215,7 +215,7 @@ public class XmlPullParserFactory {
     final StringBuffer issues = new StringBuffer();
 
     for (int i = 0; i < serializerClasses.size(); i++) {
-      final Class ppClass = (Class) serializerClasses.elementAt(i);
+      final Class ppClass = serializerClasses.elementAt(i);
       try {
         final XmlSerializer ser = (XmlSerializer) ppClass.newInstance();
 
@@ -246,7 +246,7 @@ public class XmlPullParserFactory {
     return newInstance(null, null);
   }
 
-  public static XmlPullParserFactory newInstance(String classNames, Class context)
+  public static XmlPullParserFactory newInstance(String classNames, Class<? extends XmlPullParserFactory> context)
       throws XmlPullParserException {
 
     if (context == null) {
@@ -289,8 +289,8 @@ public class XmlPullParserFactory {
     }
 
     XmlPullParserFactory factory = null;
-    final Vector parserClasses = new Vector();
-    final Vector serializerClasses = new Vector();
+    final Vector<Class> parserClasses = new Vector<Class>();
+    final Vector<Class> serializerClasses = new Vector<Class>();
     int pos = 0;
 
     while (pos < classNames.length()) {
@@ -309,6 +309,7 @@ public class XmlPullParserFactory {
         // necessary because of J2ME .class issue
         instance = candidate.newInstance();
       } catch (Exception e) {
+        e.printStackTrace();
       }
 
       if (candidate != null) {
