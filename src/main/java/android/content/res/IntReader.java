@@ -25,7 +25,7 @@ import java.io.InputStream;
  * 
  * @author Dmitry Skiba
  */
-public final class IntReader {
+public class IntReader {
 
     private InputStream stream;
     private boolean bigEndian;
@@ -42,7 +42,7 @@ public final class IntReader {
      * @param isBigEndian
      *            a boolean for whether or not the stream is in Big Endian format
      */
-    public final void reset(InputStream newStream, boolean isBigEndian) {
+    public void reset(InputStream newStream, boolean isBigEndian) {
         stream = newStream;
         bigEndian = isBigEndian;
     }
@@ -50,7 +50,7 @@ public final class IntReader {
     /**
      * Close the current stream being used by the POJO.
      */
-    public final void close() {
+    public void close() {
         if (stream != null) {
             try {
                 stream.close();
@@ -62,15 +62,15 @@ public final class IntReader {
         }
     }
 
-    public final int readByte() throws IOException {
+    public int readByte() throws IOException {
         return readInt(1);
     }
 
-    public final int readShort() throws IOException {
+    public int readShort() throws IOException {
         return readInt(2);
     }
 
-    public final int readInt() throws IOException {
+    public int readInt() throws IOException {
         return readInt(4);
     }
 
@@ -82,7 +82,7 @@ public final class IntReader {
      * @return
      * @throws IOException
      */
-    public final int readInt(int length) throws IOException {
+    public int readInt(int length) throws IOException {
         if ((length < 0) || (length > 4)) {
             throw new IllegalArgumentException();
         }
@@ -116,7 +116,7 @@ public final class IntReader {
      * @return
      * @throws IOException
      */
-    public final int[] readIntArray(int length) throws IOException {
+    public int[] readIntArray(int length) throws IOException {
         int[] array = new int[length];
 
         readIntArray(array, 0, length);
@@ -132,7 +132,7 @@ public final class IntReader {
      * @param length
      * @throws IOException
      */
-    public final void readIntArray(int[] array, int offset, int length) throws IOException {
+    public void readIntArray(int[] array, int offset, int length) throws IOException {
         for (; length > 0; length -= 1) {
             array[offset++] = readInt();
         }
@@ -145,7 +145,7 @@ public final class IntReader {
      * @return
      * @throws IOException
      */
-    public final byte[] readByteArray(int length) throws IOException {
+    public byte[] readByteArray(int length) throws IOException {
         byte[] array = new byte[length];
 
         if (stream.read(array) != length) {
@@ -161,7 +161,7 @@ public final class IntReader {
      * @param bytes
      * @throws IOException
      */
-    public final void skip(int bytes) throws IOException {
+    public void skip(int bytes) throws IOException {
         if (bytes > 0) {
             if (stream.skip(bytes) != bytes) {
                 throw new EOFException();
@@ -169,7 +169,7 @@ public final class IntReader {
         }
     }
 
-    public final void skipInt() throws IOException {
+    public void skipInt() throws IOException {
         skip(4);
     }
 }
