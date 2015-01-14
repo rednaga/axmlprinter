@@ -1,1 +1,2 @@
 # axmlprinter
+[![Build Status](https://travis-ci.org/rednaga/axmlprinter.svg?branch=master)](https://travis-ci.org/rednaga/axmlprinter) [![Coverage Status](https://img.shields.io/coveralls/rednaga/axmlprinter.svg)](https://coveralls.io/r/rednaga/axmlprinter?branch=master)
