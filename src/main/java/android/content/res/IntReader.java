@@ -29,6 +29,7 @@ public class IntReader {
 
     private InputStream stream;
     private boolean bigEndian;
+    private int bytesRead;
 
     public IntReader(InputStream stream, boolean bigEndian) {
         reset(stream, bigEndian);
@@ -45,6 +46,7 @@ public class IntReader {
     public void reset(InputStream newStream, boolean isBigEndian) {
         stream = newStream;
         bigEndian = isBigEndian;
+        bytesRead = 0;
     }
 
     /**
@@ -57,7 +59,6 @@ public class IntReader {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             reset(null, false);
         }
     }
@@ -91,6 +92,7 @@ public class IntReader {
         if (bigEndian) {
             for (int i = (length - 1) * 8; i >= 0; i -= 8) {
                 byteRead = stream.read();
+                bytesRead++;
                 if (byteRead == -1) {
                     throw new EOFException();
                 }
@@ -100,12 +102,15 @@ public class IntReader {
             length *= 8;
             for (int i = 0; i != length; i += 8) {
                 byteRead = stream.read();
+                bytesRead++;
                 if (byteRead == -1) {
                     throw new EOFException();
                 }
                 result |= (byteRead << i);
             }
         }
+
+        // bytesRead += length;
         return result;
     }
 
@@ -152,6 +157,8 @@ public class IntReader {
             throw new EOFException();
         }
 
+        bytesRead += length;
+
         return array;
     }
 
@@ -167,9 +174,14 @@ public class IntReader {
                 throw new EOFException();
             }
         }
+        bytesRead += bytes;
     }
 
     public void skipInt() throws IOException {
         skip(4);
+    }
+
+    public int getBytesRead() {
+        return bytesRead;
     }
 }
