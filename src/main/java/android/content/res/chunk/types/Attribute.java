@@ -57,10 +57,23 @@ public class Attribute implements Chunk {
 
         buffer.append("=\"");
 
+        // TODO : This should be a switch...
         if (attributeType == AttributeType.STRING.getIntType()) {
             buffer.append(stringSection.getString(stringData));
         } else if (attributeType == AttributeType.INT.getIntType()) {
             buffer.append(data);
+        } else if (attributeType == AttributeType.RESOURCE.getIntType()) {
+            buffer.append("@");
+            buffer.append(Integer.toHexString(data).toUpperCase());
+        } else if (attributeType == AttributeType.BOOLEAN.getIntType()) {
+            // TODO : Double check this..
+            if (data == -1) {
+                buffer.append("true");
+            } else if (data == 0) {
+                buffer.append("false");
+            } else {
+                buffer.append("ERROR");
+            }
         }
 
         buffer.append("\"");
