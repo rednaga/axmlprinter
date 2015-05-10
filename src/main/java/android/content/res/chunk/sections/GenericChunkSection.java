@@ -14,6 +14,8 @@ public abstract class GenericChunkSection extends GenericChunk implements Chunk,
 
         try {
             readSection(reader);
+
+            reader.skip(Math.abs(reader.getBytesRead() - getStartPosition() - size));
         } catch (IOException e) {
             e.printStackTrace();
         }

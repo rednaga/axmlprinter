@@ -7,10 +7,13 @@ import android.content.res.chunk.ChunkType;
 
 public abstract class GenericChunk implements Chunk {
 
+    private int startPosition;
+
     private ChunkType type;
     protected int size;
 
     public GenericChunk(ChunkType chunkType, IntReader reader) {
+        startPosition = reader.getBytesRead() - 4;
         type = chunkType;
         try {
             size = reader.readInt();
@@ -27,6 +30,10 @@ public abstract class GenericChunk implements Chunk {
 
     public int getSize() {
         return size;
+    }
+
+    public int getStartPosition() {
+        return startPosition;
     }
 
     protected String indent(int indents) {

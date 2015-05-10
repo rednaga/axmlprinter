@@ -173,8 +173,8 @@ public class IntReader {
             if (stream.skip(bytes) != bytes) {
                 throw new EOFException();
             }
+            bytesRead += bytes;
         }
-        bytesRead += bytes;
     }
 
     public void skipInt() throws IOException {
