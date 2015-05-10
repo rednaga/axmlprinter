@@ -37,17 +37,9 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         stringChunkFlags = inputReader.readInt();
 
         stringChunkPoolOffset = inputReader.readInt();
-        // TODO : Check that these loose conditions are ok to abide by
-        if ((stringChunkCount != 0) || (stringChunkPoolOffset != 0)) {
-            //
-        }
         stringChunkPool = new ArrayList<PoolItem>();
 
         styleChunkPoolOffset = inputReader.readInt();
-        // TODO : Check that these loose conditions are ok to abide by
-        if ((styleChunkCount != 0) || (styleChunkPoolOffset != 0)) {
-            //
-        }
         styleChunkPool = new ArrayList<PoolItem>();
     }
 
@@ -56,14 +48,17 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         for (int i = 0; i < stringChunkCount; i++) {
             stringChunkPool.add(new PoolItem(inputReader.readInt(), null));
         }
+
         if (!stringChunkPool.isEmpty()) {
             readPool(stringChunkPool, stringChunkCount, stringChunkFlags, inputReader);
         }
+
         // TODO : Does this need the flags?
         // FIXME: This is potentially wrong
         for (int i = 0; i < styleChunkCount; i++) {
             styleChunkPool.add(new PoolItem(inputReader.readInt(), null));
         }
+
         if (!styleChunkPool.isEmpty()) {
             readPool(styleChunkPool, styleChunkCount, stringChunkFlags, inputReader);
         }
@@ -85,6 +80,7 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
                 length = inputReader.readShort();
                 offset += 2;
             }
+
             StringBuilder result = new StringBuilder(length);
             for (; length != 0; length -= 1) {
                 if ((flags & UTF8_FLAG) != 0) {
@@ -95,6 +91,7 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
                     offset += 2;
                 }
             }
+
             item.setString(result.toString());
         }
     }
@@ -108,7 +105,6 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         return "";
     }
 
-    // FIXME: This is potentially wrong
     public String getStyle(int index) {
         return styleChunkPool.get(index).getString();
     }
