@@ -48,6 +48,10 @@ public class NameSpace extends GenericChunk implements Chunk {
 
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
-        return indent(indent) + toString(stringSection);
+        if (isStart()) {
+            return indent(indent) + toString(stringSection);
+        } else {
+            return "";
+        }
     }
 }
