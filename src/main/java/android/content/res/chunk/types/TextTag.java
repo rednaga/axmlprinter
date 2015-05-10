@@ -31,6 +31,11 @@ public class TextTag extends GenericChunk implements Chunk {
 
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
-        return null;
+        StringBuffer buffer = new StringBuffer();
+
+        buffer.append(indent(indent));
+        buffer.append(stringSection.getString(name));
+
+        return buffer.toString();
     }
 }
