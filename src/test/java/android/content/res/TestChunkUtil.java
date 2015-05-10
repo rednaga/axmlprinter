@@ -9,6 +9,8 @@ import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
+import android.content.res.chunk.ChunkUtil;
+
 /**
  * @author tstrazzere
  */
