@@ -11,7 +11,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.3.1'
+    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
   }
 }
 
@@ -47,4 +47,8 @@ jar {
   manifest {
     attributes 'Main-Class': 'test.AXMLPrinter'
   }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
 }
