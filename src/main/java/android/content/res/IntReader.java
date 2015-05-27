@@ -115,54 +115,6 @@ public class IntReader {
     }
 
     /**
-     * Return an integer array of a certain length from current offset.
-     * 
-     * @param length
-     * @return
-     * @throws IOException
-     */
-    public int[] readIntArray(int length) throws IOException {
-        int[] array = new int[length];
-
-        readIntArray(array, 0, length);
-
-        return array;
-    }
-
-    /**
-     * Read (store) an integer array of a specific length and offset.
-     * 
-     * @param array
-     * @param offset
-     * @param length
-     * @throws IOException
-     */
-    public void readIntArray(int[] array, int offset, int length) throws IOException {
-        for (; length > 0; length -= 1) {
-            array[offset++] = readInt();
-        }
-    }
-
-    /**
-     * Read and return a byte array of a specific length.
-     * 
-     * @param length
-     * @return
-     * @throws IOException
-     */
-    public byte[] readByteArray(int length) throws IOException {
-        byte[] array = new byte[length];
-
-        if (stream.read(array) != length) {
-            throw new EOFException();
-        }
-
-        bytesRead += length;
-
-        return array;
-    }
-
-    /**
      * Skip a specific number of bytes in the stream.
      * 
      * @param bytes
