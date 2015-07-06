@@ -4,6 +4,10 @@ apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
+version = '0.1.0'
+
+def jarVersion = version
+
 buildscript {
   repositories {
     mavenCentral()
@@ -45,8 +49,11 @@ dependencies {
 
 jar {
   manifest {
-    attributes 'Main-Class': 'test.AXMLPrinter'
+    attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
   }
+
+  processResources.inputs.property('version', version)
+  processResources.expand('version': version)
 }
 
 task wrapper(type: Wrapper) {
