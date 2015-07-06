@@ -40,6 +40,27 @@ public class TestIntReader {
         }
 
         @Test
+        public void testReadShort() throws IOException {
+            underTest.readShort();
+
+            verify(mockStream, times(2)).read();
+        }
+
+        @Test
+        public void testReadByte() throws IOException {
+            underTest.readByte();
+
+            verify(mockStream, times(1)).read();
+        }
+
+        @Test
+        public void testReadInt() throws IOException {
+            underTest.readInt();
+
+            verify(mockStream, times(4)).read();
+        }
+
+        @Test
         public void testCloseDoesntDieWithNull() {
             underTest = new IntReader(null, true);
             underTest.close();
