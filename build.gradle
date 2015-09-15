@@ -6,8 +6,6 @@ apply plugin: 'com.github.kt3k.coveralls'
 
 version = '0.1.0'
 
-def jarVersion = version
-
 buildscript {
   repositories {
     mavenCentral()
