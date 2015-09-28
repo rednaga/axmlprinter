@@ -9,16 +9,15 @@ refactored most of the code to be tested and more useful in non-command line sit
 ## Usage
 The default usecase would be to compile the library;
 
-```./gradlew jar
-```
+```./gradlew jar```
 
 Then run the library;
 
-```java -jar build/libs/axmlprinter-0.1.0.jar <target>
-```
+```java -jar build/libs/axmlprinter-0.1.0.jar <target>```
 
 ## Contributing
 Contributions welcome! Please follow the simple steps;
+
 1. Fork repository
 2. Make changes
 3. Ensure tests pass (or hopefully adding tests!)
