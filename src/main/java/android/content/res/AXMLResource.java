@@ -84,8 +84,7 @@ public class AXMLResource {
                 // Do nothing right now, not even add it to the chunk stuff
                 break;
             default:
-                System.out.println("Weird");
-                break;
+                throw new IOException("Hit an unknown chunk type!");
             }
         }
 
