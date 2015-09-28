@@ -1,59 +1,47 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
 version = '0.1.0'
 
-buildscript {
-  repositories {
+repositories {
     mavenCentral()
     jcenter()
-  }
-
-  dependencies {
-    classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
-  }
 }
 
-checkstyle {
-  toolVersion '6.1.1'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
+    }
 }
 
 allprojects {
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
-
-  tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked"
-  }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked"
+    }
 }
 
 jacocoTestReport {
-  reports {
-    html.enabled = true
-    xml.enabled = true
-    csv.enabled = false
-  }
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = false
+    }
 }
 
 dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
 }
 
 jar {
-  manifest {
-    attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
-  }
+    manifest {
+        attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
+    }
 
-  processResources.inputs.property('version', version)
-  processResources.expand('version': version)
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.7'
+    processResources.inputs.property('version', version)
+    processResources.expand('version': version)
 }
