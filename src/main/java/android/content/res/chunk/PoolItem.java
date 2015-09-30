@@ -17,7 +17,7 @@ package android.content.res.chunk;
 
 /**
  * Simple POJO for keeping the offsets and data for items inside of "pools".
- * 
+ *
  * @author tstrazzere
  */
 public class PoolItem {

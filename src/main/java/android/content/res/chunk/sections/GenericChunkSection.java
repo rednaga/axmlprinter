@@ -15,17 +15,17 @@
  */
 package android.content.res.chunk.sections;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.types.Chunk;
 import android.content.res.chunk.types.GenericChunk;
 
+import java.io.IOException;
+
 /**
  * Generic ChunkSection class for generalizing the reading and minimizing the repetitive code inside of the specific
  * sections (likely overkill..)
- * 
+ *
  * @author tstrazzere
  */
 public abstract class GenericChunkSection extends GenericChunk implements Chunk, ChunkSection {

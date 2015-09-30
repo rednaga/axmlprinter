@@ -15,16 +15,18 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * Specific chunk for ending sections and/or namespaces
- * 
+ *
  * @author tstrazzere
  */
 public class EndTag extends GenericChunk implements Chunk {
@@ -60,5 +62,29 @@ public class EndTag extends GenericChunk implements Chunk {
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
         return indent(indent) + "</" + stringSection.getString(name) + ">";
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        byte[] header = super.toBytes();
+
+        byte[] body = ByteBuffer.allocate(4 * 4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(lineNumber)
+                .putInt(unknown)
+                .putInt(namespaceUri)
+                .putInt(name)
+                .array();
+
+        return ByteBuffer.allocate(header.length + body.length)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(header)
+                .put(body)
+                .array();
     }
 }

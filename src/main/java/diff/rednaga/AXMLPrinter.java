@@ -15,18 +15,16 @@
  */
 package diff.rednaga;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 import android.content.res.AXMLResource;
+
+import java.io.*;
+import java.util.Properties;
 
 /**
  * A slimmed down version of the original AXMLPrinter from Dmitry Skiba.
- * 
+ * <p>
  * Prints xml document from Android's binary xml file.
- * 
+ *
  * @author Tim Strazzere
  */
 public class AXMLPrinter {
@@ -51,7 +49,7 @@ public class AXMLPrinter {
 
     }
 
-    public static void main(String[] arguments) {
+    public static void main(String[] arguments) throws IOException {
         if (arguments.length < 1) {
             System.out.println("Usage: AXMLPrinter <binary xml file>");
             return;
@@ -63,14 +61,25 @@ public class AXMLPrinter {
             return;
         }
 
+        FileInputStream fileInputStream = null;
+        FileOutputStream fileOutputStream = null;
         try {
             AXMLResource axmlResource = new AXMLResource();
-            axmlResource.read(new FileInputStream(arguments[0]));
+            fileInputStream = new FileInputStream(arguments[0]);
+            axmlResource.read(fileInputStream);
 
             axmlResource.print();
 
+            if (arguments.length > 1) {
+                File file = new File(arguments[1]);
+                fileOutputStream = new FileOutputStream(file);
+                axmlResource.write(fileOutputStream);
+            }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            fileInputStream.close();
+            fileOutputStream.close();
         }
     }
 

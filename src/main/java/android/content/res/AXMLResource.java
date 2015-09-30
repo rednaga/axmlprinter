@@ -15,11 +15,6 @@
  */
 package android.content.res;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.ChunkUtil;
 import android.content.res.chunk.sections.ResourceSection;
@@ -27,9 +22,17 @@ import android.content.res.chunk.sections.StringSection;
 import android.content.res.chunk.types.AXMLHeader;
 import android.content.res.chunk.types.Chunk;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+
 /**
  * Main AXMLResource object
- * 
+ *
  * @author tstrazzere
  */
 public class AXMLResource {
@@ -62,29 +65,31 @@ public class AXMLResource {
             Chunk chunk = ChunkUtil.createChunk(reader);
 
             switch (chunk.getChunkType()) {
-            case AXML_HEADER:
-                header = (AXMLHeader) chunk;
-                size = header.getSize();
-                break;
-            case STRING_SECTION:
-                stringSection = (StringSection) chunk;
-                break;
-            // operational = true;
-            case RESOURCE_SECTION:
-                resourceSection = (ResourceSection) chunk;
-                break;
-            case START_NAMESPACE:
-            case END_NAMESPACE:
-            case START_TAG:
-            case END_TAG:
-            case TEXT_TAG:
-                chunks.add(chunk);
-                break;
-            case BUFFER:
-                // Do nothing right now, not even add it to the chunk stuff
-                break;
-            default:
-                throw new IOException("Hit an unknown chunk type!");
+                case AXML_HEADER:
+                    header = (AXMLHeader) chunk;
+                    // TODO : This should warn if true
+                    // This will cause breakages if the header is lying
+                    //size = header.getSize();
+                    break;
+                case STRING_SECTION:
+                    stringSection = (StringSection) chunk;
+                    break;
+                // operational = true;
+                case RESOURCE_SECTION:
+                    resourceSection = (ResourceSection) chunk;
+                    break;
+                case START_NAMESPACE:
+                case END_NAMESPACE:
+                case START_TAG:
+                case END_TAG:
+                case TEXT_TAG:
+                    chunks.add(chunk);
+                    break;
+                case BUFFER:
+                    // Do nothing right now, not even add it to the chunk stuff
+                    break;
+                default:
+                    throw new IOException("Hit an unknown chunk type!");
             }
         }
 
@@ -96,6 +101,35 @@ public class AXMLResource {
         }
 
         return false;
+    }
+
+    public void write(OutputStream outputStream) throws IOException {
+
+        int chunkSizes = 0;
+        Iterator<Chunk> iterator = chunks.iterator();
+        while (iterator.hasNext()) {
+            Chunk chunk = iterator.next();
+            chunkSizes += chunk.getSize();
+        }
+
+        System.out.println("String section size: " + stringSection.getSize());
+        System.out.println("Resource section size: " + resourceSection.getSize());
+        System.out.println("chunk section size: " + chunkSizes);
+        System.out.println("Size was " + ((2 * 4) + stringSection.getSize() + resourceSection.getSize() + chunkSizes));
+
+        outputStream.write(ByteBuffer.allocate(8)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(ChunkType.AXML_HEADER.getIntType())
+                .putInt(((2 * 4) + stringSection.getSize() + resourceSection.getSize() + chunkSizes))
+                .array());
+        outputStream.write(stringSection.toBytes());
+        outputStream.write(resourceSection.toBytes());
+        iterator = chunks.iterator();
+        while (iterator.hasNext()) {
+            Chunk chunk = iterator.next();
+            outputStream.write(chunk.toBytes());
+        }
+
     }
 
     public void print() {

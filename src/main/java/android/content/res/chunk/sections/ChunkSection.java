@@ -18,14 +18,14 @@ e License.
  */
 package android.content.res.chunk.sections;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.types.Chunk;
 
+import java.io.IOException;
+
 /**
  * Interface for Chunk which is a section type
- * 
+ *
  * @author tstrazzere
  */
 public interface ChunkSection extends Chunk {
@@ -37,7 +37,7 @@ public interface ChunkSection extends Chunk {
 
     /**
      * Read the
-     * 
+     *
      * @param inputReader
      * @throws IOException
      */

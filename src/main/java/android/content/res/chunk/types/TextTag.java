@@ -15,16 +15,18 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * Specific Chunk which contains a text key and value
- * 
+ *
  * @author tstrazzere
  */
 public class TextTag extends GenericChunk implements Chunk {
@@ -68,5 +70,30 @@ public class TextTag extends GenericChunk implements Chunk {
         buffer.append(stringSection.getString(name));
 
         return buffer.toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        byte[] header = super.toBytes();
+
+        byte[] body = ByteBuffer.allocate(5 * 4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(lineNumber)
+                .putInt(unknown)
+                .putInt(name)
+                .putInt(unknown2)
+                .putInt(unknown3)
+                .array();
+
+        return ByteBuffer.allocate(header.length + body.length)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(header)
+                .put(body)
+                .array();
     }
 }

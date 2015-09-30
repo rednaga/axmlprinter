@@ -15,14 +15,16 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * Abstract class for the generic lifting required by all Chunks
- * 
+ *
  * @author tstrazzere
  */
 public abstract class GenericChunk implements Chunk {
@@ -54,7 +56,7 @@ public abstract class GenericChunk implements Chunk {
     }
 
     /*
-     * (non-Javadoc)
+     *` (non-Javadoc)
      * 
      * @see android.content.res.chunk.types.Chunk#getSize()
      */
@@ -71,7 +73,7 @@ public abstract class GenericChunk implements Chunk {
 
     /**
      * @param indents
-     * @return a number of indents needed for properly formating XML
+     * @return a number of indents needed for properly formatting XML
      */
     protected String indent(int indents) {
         StringBuffer buffer = new StringBuffer();
@@ -79,5 +81,18 @@ public abstract class GenericChunk implements Chunk {
             buffer.append("\t");
         }
         return buffer.toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        return ByteBuffer.allocate(8)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(type.getIntType())
+                .putInt(getSize()).array();
     }
 }

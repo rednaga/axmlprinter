@@ -15,20 +15,20 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+
 /**
  * This "buffer" chunk is currently being used for empty space, though it might not be needed
- * 
+ * <p>
  * TODO: Verify this is needed
- * 
+ * <p>
  * TODO: If kept, should potentially alert/warn if it happens
- * 
+ *
  * @author tstrazzere
  */
 public class Buffer implements Chunk {
@@ -76,5 +76,17 @@ public class Buffer implements Chunk {
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
         return null;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        return new byte[]{
+                0x00, 0x00, 0x00, 0x00
+        };
     }
 }

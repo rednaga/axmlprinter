@@ -15,18 +15,19 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+
 /**
  * ChunkType which is for the AXMLHeader, should be at the beginning and only the beginning of the files.
- * 
+ * <p>
  * TODO : Check and warn if not at the beginning
- * 
+ * TODO : toBytes() needs to understand the correct size of the entire file
+ *
  * @author tstrazzere
  */
 public class AXMLHeader extends GenericChunk {
@@ -54,5 +55,15 @@ public class AXMLHeader extends GenericChunk {
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
         return indent(indent) + "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        return super.toBytes();
     }
 }

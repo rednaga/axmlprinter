@@ -20,9 +20,9 @@ import java.io.InputStream;
 
 /**
  * Simple helper class that allows reading of integers.
- * 
+ * <p>
  * TODO: implement buffering
- * 
+ *
  * @author Dmitry Skiba
  */
 public class IntReader {
@@ -37,11 +37,9 @@ public class IntReader {
 
     /**
      * Reset the POJO to use a new stream.
-     * 
-     * @param newStream
-     *            the {@code InputStream} to use
-     * @param isBigEndian
-     *            a boolean for whether or not the stream is in Big Endian format
+     *
+     * @param newStream   the {@code InputStream} to use
+     * @param isBigEndian a boolean for whether or not the stream is in Big Endian format
      */
     public void reset(InputStream newStream, boolean isBigEndian) {
         stream = newStream;
@@ -77,9 +75,8 @@ public class IntReader {
 
     /**
      * Read an integer of a certain length from the current stream.
-     * 
-     * @param length
-     *            to read
+     *
+     * @param length to read
      * @return
      * @throws IOException
      */
@@ -110,13 +107,12 @@ public class IntReader {
             }
         }
 
-        // bytesRead += length;
         return result;
     }
 
     /**
      * Skip a specific number of bytes in the stream.
-     * 
+     *
      * @param bytes
      * @throws IOException
      */

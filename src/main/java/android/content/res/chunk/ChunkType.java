@@ -17,7 +17,7 @@ package android.content.res.chunk;
 
 /**
  * Enum for ChunkTypes - the different types of Chunks available to create
- * 
+ *
  * @author tstrazzere
  */
 public enum ChunkType {

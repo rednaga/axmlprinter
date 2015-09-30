@@ -15,13 +15,16 @@
  */
 package android.content.res.chunk.sections;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.PoolItem;
 import android.content.res.chunk.types.Chunk;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class StringSection extends GenericChunkSection implements Chunk, ChunkSection {
 
@@ -65,7 +68,7 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         }
 
         if (!stringChunkPool.isEmpty()) {
-            readPool(stringChunkPool, stringChunkCount, stringChunkFlags, inputReader);
+            readPool(stringChunkPool, stringChunkFlags, inputReader);
         }
 
         // TODO : Does this need the flags?
@@ -75,15 +78,15 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         }
 
         if (!styleChunkPool.isEmpty()) {
-            readPool(styleChunkPool, styleChunkCount, stringChunkFlags, inputReader);
+            readPool(styleChunkPool, stringChunkFlags, inputReader);
         }
     }
 
     // TODO : Ensure we goto the proper offset in the case it isn't in proper order
-    private void readPool(ArrayList<PoolItem> pool, int poolSize, int flags, IntReader inputReader) throws IOException {
+    private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader) throws IOException {
         int offset = 0;
         for (PoolItem item : pool) {
-            // XXX: This assumes that the pool is ordered...
+            // TODO: This assumes that the pool is ordered...
             inputReader.skip(item.getOffset() - offset);
             offset = item.getOffset();
 
@@ -112,7 +115,6 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
     }
 
     public String getString(int index) {
-        // index--;
         if ((index > -1) && (index < stringChunkCount)) {
             return stringChunkPool.get(index).getString();
         }
@@ -127,5 +129,150 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
         return null;
+    }
+
+    @Override
+    public int getSize() {
+        int stringDataSize = 0;
+        int previousSize;
+        for (PoolItem item : stringChunkPool) {
+            previousSize = stringDataSize;
+            // TODO: This is potentially wrong
+            // length identifier
+            stringDataSize += ((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1;
+            // actual string data
+            stringDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
+            // buffer
+            int bufferSize = 4 - (stringDataSize - previousSize) % 4;
+            if (bufferSize > 0 && bufferSize < 4) {
+                stringDataSize += bufferSize;
+            }
+        }
+
+        int styleDataSize = 0;
+        for (PoolItem item : styleChunkPool) {
+            stringDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
+        }
+
+        return (2 * 4) + // Header
+                (5 * 4) + // static sections
+                (stringChunkCount * 4) + // string table offset size
+                stringDataSize +
+                (styleChunkCount * 4) + // style table offset size
+                styleDataSize;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        byte[] header = super.toBytes();
+
+        // TODO : We need to ensure these are already "sorted"
+        ByteBuffer offsetBuffer = ByteBuffer.allocate(stringChunkPool.size() * 4)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        int offset = 0;
+        int previousOffset;
+        ArrayList<byte[]> stringData = new ArrayList<>();
+        for (PoolItem item : stringChunkPool) {
+            offsetBuffer.putInt(offset);
+            previousOffset = offset;
+
+            // TODO : Ensure this is properly handled, potentially a ULEB128?
+            // Add string length bytes
+            if (item.getString().length() > 255) {
+                System.err.println("Error, string length is greater than the current expected lengths!");
+            }
+            offset += ((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1;
+
+            // Add length of string based on if UTF-8 flag is enabled
+            offset += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
+
+            // Add buffer
+            int bufferSize = 4 - ((offset - previousOffset) % 4);
+            if (bufferSize > 0 && bufferSize < 4) {
+                offset += bufferSize;
+            }
+
+            // Append actual length + data
+            ByteBuffer length;
+            if ((stringChunkFlags & UTF8_FLAG) == 0) {
+                length = ByteBuffer.allocate(2)
+                        .order(ByteOrder.LITTLE_ENDIAN)
+                        .putShort((short) item.getString().length());
+            } else {
+                length = ByteBuffer.allocate(1)
+                        .put((byte) item.getString().length());
+            }
+
+            ByteBuffer string = ByteBuffer.allocate(item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1))
+                    .order(ByteOrder.LITTLE_ENDIAN);
+            for (byte character : item.getString().getBytes()) {
+                if ((stringChunkFlags & UTF8_FLAG) == 0) {
+                    string.putShort(character);
+                } else {
+                    string.put(character);
+                }
+            }
+
+            ByteBuffer stringDataBuffer = ByteBuffer.allocate(offset - previousOffset)
+                    .order(ByteOrder.LITTLE_ENDIAN)
+                    .put(length.array())
+                    .put(string.array());
+
+            if (bufferSize > 0 && bufferSize < 4) {
+                // TODO : fix this
+                byte[] buffer = new byte[bufferSize];
+                Arrays.fill(buffer, (byte) 0x00);
+                stringDataBuffer.put(buffer);
+            }
+
+            stringData.add(stringDataBuffer.array());
+        }
+
+        // Combine strings into one buffer
+        ByteBuffer stringsBuffer = ByteBuffer.allocate(offsetBuffer.capacity() + offset)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(offsetBuffer.array());
+        for (byte[] data : stringData) {
+            stringsBuffer.put(data);
+        }
+        byte[] strings = stringsBuffer.array();
+
+//        byte[] styles = new byte[]{0x00};
+
+        int newStringChunkOffset = 0;
+        if (!stringChunkPool.isEmpty()) {
+            newStringChunkOffset = (5 * 4) /* header + 3 other ints above it */
+                    + stringChunkCount * 4 /* index table size */
+                    + 8 /* (this space and the style chunk offset */;
+        }
+
+        int newStyleChunkOffset = 0;
+        if (!styleChunkPool.isEmpty()) {
+            newStyleChunkOffset = (6 * 4) /* header + 4 other ints above it */
+                    + styleChunkCount * 4 /* index table size */
+                    + 8 /* (this space and the style chunk offset */;
+        }
+
+        byte[] body = ByteBuffer.allocate(5 * 4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(stringChunkCount)
+                .putInt(styleChunkCount)
+                .putInt(stringChunkFlags)
+                .putInt(newStringChunkOffset)
+                .putInt(newStyleChunkOffset)
+                .array();
+
+        return ByteBuffer.allocate(header.length + body.length + strings.length /*+ styles.length*/)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(header)
+                .put(body)
+                .put(strings)
+//                .put(styles)
+                .array();
     }
 }

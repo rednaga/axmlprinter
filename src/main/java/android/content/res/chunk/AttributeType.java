@@ -17,7 +17,7 @@ package android.content.res.chunk;
 
 /**
  * Enum for attribute types for ChunkTypes
- * 
+ *
  * @author tstrazzere
  */
 public enum AttributeType {

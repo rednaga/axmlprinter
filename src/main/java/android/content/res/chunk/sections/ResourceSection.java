@@ -15,20 +15,24 @@
  */
 package android.content.res.chunk.sections;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.types.Chunk;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+
 /**
  * Concrete class for the section which is specifically for the resource ids.
- * 
+ *
  * @author tstrazzere
  */
 public class ResourceSection extends GenericChunkSection implements Chunk, ChunkSection {
 
-    private int[] resourceIDs;
+    // TODO : Make this an ArrayList so it's easier to add/remove
+    protected ArrayList<Integer> resourceIDs;
 
     public ResourceSection(ChunkType chunkType, IntReader reader) {
         super(chunkType, reader);
@@ -42,7 +46,7 @@ public class ResourceSection extends GenericChunkSection implements Chunk, Chunk
     @Override
     public void readHeader(IntReader inputReader) throws IOException {
         // Initialize this variable here
-        resourceIDs = new int[((size / 4) - 2)];
+        resourceIDs = new ArrayList<>();
     }
 
     /*
@@ -53,16 +57,26 @@ public class ResourceSection extends GenericChunkSection implements Chunk, Chunk
     @Override
     public void readSection(IntReader inputReader) throws IOException {
         for (int i = 0; i < ((size / 4) - 2); i++) {
-            resourceIDs[i] = inputReader.readInt();
+            addResource(inputReader.readInt());
         }
     }
 
+    public void addResource(int value) {
+        resourceIDs.add(value);
+    }
+
+    @Override
+    public int getSize() {
+        // Tag + Size + resourceIds
+        return 4 + 4 + (resourceIDs.size() * 4);
+    }
+
     public int getResourceID(int index) {
-        return resourceIDs[index];
+        return resourceIDs.get(index);
     }
 
     public int getResourceCount() {
-        return resourceIDs.length;
+        return resourceIDs.size();
     }
 
     /*
@@ -74,5 +88,27 @@ public class ResourceSection extends GenericChunkSection implements Chunk, Chunk
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
         return null;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        byte[] header = super.toBytes();
+
+        ByteBuffer offsetBuffer = ByteBuffer.allocate(resourceIDs.size() * 4).order(ByteOrder.LITTLE_ENDIAN);
+
+        for (int id : resourceIDs) {
+            offsetBuffer.putInt(id);
+        }
+        byte[] body = offsetBuffer.array();
+
+        return ByteBuffer.allocate(header.length + body.length)
+                .put(header)
+                .put(body)
+                .array();
     }
 }

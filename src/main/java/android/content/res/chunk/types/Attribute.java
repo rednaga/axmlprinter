@@ -15,17 +15,19 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.AttributeType;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * Specific type of Chunk which contains the metadata
- * 
+ *
  * @author tstrazzere
  */
 public class Attribute implements Chunk {
@@ -77,7 +79,7 @@ public class Attribute implements Chunk {
      */
     @Override
     public int getSize() {
-        return 4;
+        return 4 * 5;
     }
 
     /*
@@ -120,5 +122,22 @@ public class Attribute implements Chunk {
         buffer.append("\"");
 
         return buffer.toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see android.content.res.chunk.types.Chunk#toBytes()
+     */
+    @Override
+    public byte[] toBytes() {
+        return ByteBuffer.allocate(getSize())
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(uri)
+                .putInt(name)
+                .putInt(stringData)
+                .putInt(attributeType)
+                .putInt(data)
+                .array();
     }
 }

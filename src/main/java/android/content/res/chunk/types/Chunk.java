@@ -15,23 +15,23 @@
  */
 package android.content.res.chunk.types;
 
-import java.io.IOException;
-
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
+import java.io.IOException;
+
 /**
  * Generic interface for everything that is at minimum a "chunk"
- * 
+ *
  * @author tstrazzere
  */
 public interface Chunk {
 
     /**
      * Read the header section of the chunk
-     * 
+     *
      * @param reader
      * @throws IOException
      */
@@ -48,6 +48,7 @@ public interface Chunk {
     public int getSize();
 
     // XXX: Not sure this needs to exist
+
     /**
      * @return a String representation of the Chunk
      */
@@ -60,5 +61,12 @@ public interface Chunk {
      * @return a String representation in XML form
      */
     public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent);
+
+    /**
+     * Get the a byte[] for the chunk
+     *
+     * @return
+     */
+    public byte[] toBytes();
 
 }
