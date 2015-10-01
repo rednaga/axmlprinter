@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
-version = '0.1.0'
+version = '0.1.5'
 
 repositories {
     mavenCentral()
