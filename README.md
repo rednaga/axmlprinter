@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/rednaga/axmlprinter.svg?branch=master)](https://travis-ci.org/rednaga/axmlprinter) [![Coverage Status](https://img.shields.io/coveralls/rednaga/axmlprinter.svg)](https://coveralls.io/r/rednaga/axmlprinter?branch=master)
 
 This is a heavily (almost 100%?) refactor of the Android4ME `axmlprinter` library/code. Personally I
-had used the library for years without much issue and it was fast/useful just for pinging out Android
+had used the library for years without much issue and it was fast/useful just for printing out Android
 Manifest files. In the past few years due to people mucking with AXML files and my own boredom, I've
 refactored most of the code to be tested and more useful in non-command line situations.
 
