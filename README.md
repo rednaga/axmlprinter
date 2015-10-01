@@ -7,13 +7,13 @@ Manifest files. In the past few years due to people mucking with AXML files and 
 refactored most of the code to be tested and more useful in non-command line situations.
 
 ## Usage
-The default usecase would be to compile the library;
+The default use case would be to compile the library;
 
 ```./gradlew jar```
 
 Then run the library;
 
-```java -jar build/libs/axmlprinter-0.1.0.jar <target>```
+```java -jar build/libs/axmlprinter-0.1.5.jar <target>```
 
 ## Contributing
 Contributions welcome! Please follow the simple steps;
