@@ -78,8 +78,13 @@ public class AXMLPrinter {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            fileInputStream.close();
-            fileOutputStream.close();
+            if (fileInputStream != null) {
+                fileInputStream.close();
+            }
+
+            if (fileOutputStream != null) {
+                fileOutputStream.close();
+            }
         }
     }
 
