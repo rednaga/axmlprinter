@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * StartTag type of Chunk, differs from a Namespace as there will be specific metadata inside of it
@@ -59,8 +60,9 @@ public class StartTag extends GenericChunk implements Chunk {
         flags = inputReader.readInt();
         attributeCount = inputReader.readInt();
         classAttribute = inputReader.readInt();
+
+        attributes = new ArrayList<>();
         if (attributeCount > 0) {
-            attributes = new ArrayList<>();
             for (int i = 0; i < attributeCount; i++) {
                 attributes.add(new Attribute(inputReader));
             }
@@ -74,6 +76,26 @@ public class StartTag extends GenericChunk implements Chunk {
     @Override
     public int getSize() {
         return (9 * 4) + (attributeCount * 20);
+    }
+
+    public ArrayList<Attribute> getAttributes() {
+        return attributes;
+    }
+
+    public void insertOrReplaceAttribute(Attribute newAttribute) {
+        Iterator<Attribute> iterator = attributes.iterator();
+        while (iterator.hasNext()) {
+            Attribute attribute = iterator.next();
+            if (attribute.getNameIndex() == newAttribute.getNameIndex()) {
+                iterator.remove();
+            }
+        }
+
+        attributes.add(newAttribute);
+    }
+
+    public String getName(StringSection stringSection) {
+        return stringSection.getString(name);
     }
 
     /*
@@ -118,13 +140,13 @@ public class StartTag extends GenericChunk implements Chunk {
                 .putInt(namespaceUri)
                 .putInt(name)
                 .putInt(flags)
-                .putInt(attributeCount)
+                .putInt(attributes.size())
                 .putInt(classAttribute)
                 .array();
 
         byte[] dynamicBody;
-        if (attributeCount > 0) {
-            ByteBuffer attributeData = ByteBuffer.allocate(attributeCount * 20)
+        if (attributes.size() > 0) {
+            ByteBuffer attributeData = ByteBuffer.allocate(attributes.size() * 20)
                     .order(ByteOrder.LITTLE_ENDIAN);
             for (Attribute attribute : attributes) {
                 attributeData.put(attribute.toBytes());

@@ -39,6 +39,28 @@ public class Attribute implements Chunk {
     private int attributeType;
     private int data;
 
+    public Attribute(String uri,
+                     String name,
+                     String stringData,
+                     AttributeType type,
+                     Object data,
+                     StringSection stringSection) {
+        this.uri = stringSection.getStringIndex(uri);
+        this.name = stringSection.getStringIndex(name);
+        this.stringData = stringSection.getStringIndex(stringData);
+        this.attributeType = type.getIntType();
+
+        if (attributeType == AttributeType.STRING.getIntType()) {
+            if (this.stringData == -1) {
+                this.stringData = stringSection.putStringIndex(stringData);
+            }
+            this.data = -1;
+        } else {
+            this.data = (int) data;
+        }
+
+    }
+
     public Attribute(IntReader reader) {
         try {
             uri = reader.readInt();
@@ -80,6 +102,14 @@ public class Attribute implements Chunk {
     @Override
     public int getSize() {
         return 4 * 5;
+    }
+
+    public int getNameIndex() {
+        return name;
+    }
+
+    public int getStringDataIndex() {
+        return stringData;
     }
 
     /*

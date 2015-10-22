@@ -20,7 +20,9 @@ import android.content.res.chunk.ChunkUtil;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 import android.content.res.chunk.types.AXMLHeader;
+import android.content.res.chunk.types.Attribute;
 import android.content.res.chunk.types.Chunk;
+import android.content.res.chunk.types.StartTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +53,29 @@ public class AXMLResource {
         if (!read(stream)) {
             throw new IOException();
         }
+    }
+
+    public void injectApplicationAttribute(Attribute attribute) {
+        StartTag tag = getApplicationTag();
+
+        tag.insertOrReplaceAttribute(attribute);
+    }
+
+    public StartTag getApplicationTag() {
+        Iterator<Chunk> iterator = chunks.iterator();
+        while (iterator.hasNext()) {
+            Chunk chunk = iterator.next();
+            if (chunk instanceof StartTag &&
+                    ((StartTag) chunk).getName(stringSection).equalsIgnoreCase("application")) {
+                return (StartTag) chunk;
+            }
+        }
+
+        return null;
+    }
+
+    public StringSection getStringSection() {
+        return stringSection;
     }
 
     public boolean read(InputStream stream) throws IOException {

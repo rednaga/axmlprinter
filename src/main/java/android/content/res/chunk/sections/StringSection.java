@@ -114,8 +114,31 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         }
     }
 
+    public int getStringIndex(String string) {
+        if (string != null) {
+            for (PoolItem item : stringChunkPool) {
+                if (item.getString().equals(string)) {
+                    return stringChunkPool.indexOf(item);
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    public int putStringIndex(String string) {
+        int currentPosition = getStringIndex(string);
+        if (currentPosition != -1) {
+            return currentPosition;
+        }
+
+        stringChunkPool.add(new PoolItem(-1, string));
+
+        return getStringIndex(string);
+    }
+
     public String getString(int index) {
-        if ((index > -1) && (index < stringChunkCount)) {
+        if ((index > -1) && (index < stringChunkPool.size())) {
             return stringChunkPool.get(index).getString();
         }
 
@@ -151,14 +174,14 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
 
         int styleDataSize = 0;
         for (PoolItem item : styleChunkPool) {
-            stringDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
+            styleDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
         }
 
         return (2 * 4) + // Header
                 (5 * 4) + // static sections
-                (stringChunkCount * 4) + // string table offset size
+                (stringChunkPool.size() * 4) + // string table offset size
                 stringDataSize +
-                (styleChunkCount * 4) + // style table offset size
+                (styleChunkPool.size() * 4) + // style table offset size
                 styleDataSize;
     }
 
@@ -247,21 +270,21 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         int newStringChunkOffset = 0;
         if (!stringChunkPool.isEmpty()) {
             newStringChunkOffset = (5 * 4) /* header + 3 other ints above it */
-                    + stringChunkCount * 4 /* index table size */
+                    + stringChunkPool.size() * 4 /* index table size */
                     + 8 /* (this space and the style chunk offset */;
         }
 
         int newStyleChunkOffset = 0;
         if (!styleChunkPool.isEmpty()) {
             newStyleChunkOffset = (6 * 4) /* header + 4 other ints above it */
-                    + styleChunkCount * 4 /* index table size */
+                    + styleChunkPool.size() * 4 /* index table size */
                     + 8 /* (this space and the style chunk offset */;
         }
 
         byte[] body = ByteBuffer.allocate(5 * 4)
                 .order(ByteOrder.LITTLE_ENDIAN)
-                .putInt(stringChunkCount)
-                .putInt(styleChunkCount)
+                .putInt(stringChunkPool.size())
+                .putInt(styleChunkPool.size())
                 .putInt(stringChunkFlags)
                 .putInt(newStringChunkOffset)
                 .putInt(newStyleChunkOffset)
