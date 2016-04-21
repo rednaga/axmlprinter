@@ -34,7 +34,7 @@ import java.util.Iterator;
 public class StartTag extends GenericChunk implements Chunk {
 
     private int lineNumber;
-    private int unknown;
+    private int commentIndex;
     private int namespaceUri;
     private int name;
     private int flags;
@@ -54,7 +54,7 @@ public class StartTag extends GenericChunk implements Chunk {
     @Override
     public void readHeader(IntReader inputReader) throws IOException {
         lineNumber = inputReader.readInt();
-        unknown = inputReader.readInt();
+        commentIndex = inputReader.readInt();
         namespaceUri = inputReader.readInt();
         name = inputReader.readInt();
         flags = inputReader.readInt();
@@ -136,7 +136,7 @@ public class StartTag extends GenericChunk implements Chunk {
         byte[] staticBody = ByteBuffer.allocate(7 * 4)
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .putInt(lineNumber)
-                .putInt(unknown)
+                .putInt(commentIndex)
                 .putInt(namespaceUri)
                 .putInt(name)
                 .putInt(flags)

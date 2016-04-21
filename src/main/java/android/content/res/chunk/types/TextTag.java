@@ -32,7 +32,7 @@ import java.nio.ByteOrder;
 public class TextTag extends GenericChunk implements Chunk {
 
     private int lineNumber;
-    private int unknown;
+    private int commentIndex;
 
     private int name;
     private int unknown2;
@@ -50,7 +50,7 @@ public class TextTag extends GenericChunk implements Chunk {
     @Override
     public void readHeader(IntReader inputReader) throws IOException {
         lineNumber = inputReader.readInt();
-        unknown = inputReader.readInt();
+        commentIndex = inputReader.readInt();
         name = inputReader.readInt();
         unknown2 = inputReader.readInt();
         unknown3 = inputReader.readInt();
@@ -84,7 +84,7 @@ public class TextTag extends GenericChunk implements Chunk {
         byte[] body = ByteBuffer.allocate(5 * 4)
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .putInt(lineNumber)
-                .putInt(unknown)
+                .putInt(commentIndex)
                 .putInt(name)
                 .putInt(unknown2)
                 .putInt(unknown3)

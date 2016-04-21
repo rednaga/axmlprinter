@@ -32,7 +32,7 @@ import java.nio.ByteOrder;
 public class NameSpace extends GenericChunk implements Chunk {
 
     private int lineNumber;
-    private int unknown;
+    private int commentIndex;
     private int prefix;
     private int uri;
 
@@ -48,7 +48,7 @@ public class NameSpace extends GenericChunk implements Chunk {
     @Override
     public void readHeader(IntReader inputReader) throws IOException {
         lineNumber = inputReader.readInt();
-        unknown = inputReader.readInt();
+        commentIndex = inputReader.readInt();
         prefix = inputReader.readInt();
         uri = inputReader.readInt();
     }
@@ -103,7 +103,7 @@ public class NameSpace extends GenericChunk implements Chunk {
         byte[] body = ByteBuffer.allocate(4 * 4)
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .putInt(lineNumber)
-                .putInt(unknown)
+                .putInt(commentIndex)
                 .putInt(prefix)
                 .putInt(uri)
                 .array();
