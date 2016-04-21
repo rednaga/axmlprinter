@@ -35,8 +35,8 @@ public class TextTag extends GenericChunk implements Chunk {
     private int commentIndex;
 
     private int name;
-    private int unknown2;
-    private int unknown3;
+    private int rawValue;
+    private int typedValue;
 
     public TextTag(ChunkType chunkType, IntReader inputReader) {
         super(chunkType, inputReader);
@@ -52,8 +52,8 @@ public class TextTag extends GenericChunk implements Chunk {
         lineNumber = inputReader.readInt();
         commentIndex = inputReader.readInt();
         name = inputReader.readInt();
-        unknown2 = inputReader.readInt();
-        unknown3 = inputReader.readInt();
+        rawValue = inputReader.readInt();
+        typedValue = inputReader.readInt();
     }
 
     /*
@@ -86,8 +86,8 @@ public class TextTag extends GenericChunk implements Chunk {
                 .putInt(lineNumber)
                 .putInt(commentIndex)
                 .putInt(name)
-                .putInt(unknown2)
-                .putInt(unknown3)
+                .putInt(rawValue)
+                .putInt(typedValue)
                 .array();
 
         return ByteBuffer.allocate(header.length + body.length)
