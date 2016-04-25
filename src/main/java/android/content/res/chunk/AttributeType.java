@@ -45,6 +45,48 @@ public enum AttributeType {
         public int getIntType() {
             return 0x12000008;
         }
+    },
+    ATTR {
+        @Override
+        public int getIntType() {
+            return 0x02000008;
+        }
+    },
+    DIMEN {
+        @Override
+        public int getIntType() {
+            return 0x05000008;
+        }
+    },
+    FRACTION {
+        @Override
+        public int getIntType() {
+            return 0x06000008;
+        }
+    },
+    FLOAT {
+        @Override
+        public int getIntType() {
+            return 0x04000008;
+        }
+    },
+    FLAGS {
+        @Override
+        public int getIntType() {
+            return 0x11000008;
+        }
+    },
+    COLOR1 {
+        @Override
+        public int getIntType() {
+            return 0x1C000008;
+        }
+    },
+    COLOR2 {
+        @Override
+        public int getIntType() {
+            return 0x1D000008;
+        }
     };
 
     public abstract int getIntType();
