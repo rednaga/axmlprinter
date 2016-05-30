@@ -53,6 +53,15 @@ public class TestAXMLResource {
         }
 
         @Test
+        public void testToXml() throws IOException {
+            InputStream testStream = this.getClass().getClassLoader().getResourceAsStream(largeFromMalware);
+
+            underTest = new AXMLResource(testStream);
+
+            System.out.println(underTest.toXML());;
+        }
+
+        @Test
         public void testInsertApplicationAttribute() throws IOException {
             InputStream testStream = this.getClass().getClassLoader().getResourceAsStream(largeFromMalware);
 
