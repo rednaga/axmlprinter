@@ -227,17 +227,9 @@ public class AXMLResource {
 
     private String appendNameSpace(String preChunkXml, List<String> namespaceXmlList) {
         StringBuilder strbui = new StringBuilder(preChunkXml);
-        int index = strbui.indexOf("\n");
-        if (index == -1) {
-            index = strbui.indexOf(" ");
-            if (index == -1) {
-                index = strbui.lastIndexOf("/>");
-                if (index == -1) {
-                    index = strbui.lastIndexOf(">");
-                }
-            }
-        }
-        if (index == -1) {
+        int index;
+        if ((index = strbui.indexOf("\n")) == -1 && (index = strbui.indexOf(" ")) == -1
+                && (index = strbui.indexOf("/>")) == -1 && (index = strbui.indexOf(">")) == -1) {
             throw new RuntimeException("Append name space fail. chunk xml: " + preChunkXml);
         }
         StringBuilder namespaceStrbui = new StringBuilder();
