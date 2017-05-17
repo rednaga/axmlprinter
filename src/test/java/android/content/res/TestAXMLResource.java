@@ -7,7 +7,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 
 import static org.junit.Assert.assertEquals;
@@ -50,6 +56,27 @@ public class TestAXMLResource {
             underTest = new AXMLResource(testStream);
 
             underTest.print();
+        }
+
+        @Test
+        public void testToXml() throws IOException, ParserConfigurationException {
+            InputStream testStream = this.getClass().getClassLoader().getResourceAsStream(largeFromMalware);
+
+            underTest = new AXMLResource(testStream);
+            String xml = underTest.toXML();
+
+            try {
+                Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes()));
+                Node manifestNode = document.getFirstChild();
+                NamedNodeMap manifestNodeAttributes = manifestNode.getAttributes();
+                assertEquals("http://schemas.android.com/apk/res/android", manifestNodeAttributes.getNamedItem("xmlns:android").getNodeValue());
+                assertEquals("3133", manifestNodeAttributes.getNamedItem("android:versionCode").getNodeValue());
+                assertEquals("1.9.3", manifestNodeAttributes.getNamedItem("android:versionName").getNodeValue());
+                assertEquals("com.faithcomesbyhearing.android.pt.bibleis", manifestNodeAttributes.getNamedItem("package").getNodeValue());
+            } catch (SAXException e) {
+                // Is not xml
+                assertTrue(false);
+            }
         }
 
         @Test

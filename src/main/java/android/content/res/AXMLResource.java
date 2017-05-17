@@ -29,8 +29,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Main AXMLResource object
@@ -162,19 +164,81 @@ public class AXMLResource {
         log("%s", header.toXML(stringSection, resourceSection, 0));
         Iterator<Chunk> iterator = chunks.iterator();
         int indents = 0;
+        List<String> namespaceXmlList = new ArrayList<String>();
+
         while (iterator.hasNext()) {
             Chunk chunk = iterator.next();
             if (chunk.getChunkType() == ChunkType.END_TAG) {
                 indents--;
             }
-            // if(chunk.getChunkType() == ChunkType.START_NAMESPACE)
 
-            log("%s", chunk.toXML(stringSection, resourceSection, indents));
+            if (chunk.getChunkType() == ChunkType.START_NAMESPACE) {
+                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, indents));
+            } else if (chunk.getChunkType() == ChunkType.END_NAMESPACE) {
+                // ignore
+            } else {
+                if (namespaceXmlList.isEmpty()) {
+                    log("%s", chunk.toXML(stringSection, resourceSection, indents));
+                } else {
+                    log("%s", appendNameSpace(chunk.toXML(stringSection, resourceSection, indents), namespaceXmlList));
+                    namespaceXmlList.clear();
+                }
+            }
 
             if (chunk.getChunkType() == ChunkType.START_TAG) {
                 indents++;
             }
         }
+
+    }
+
+    public String toXML() {
+        StringBuilder xmlStrbui = new StringBuilder();
+        xmlStrbui.append(header.toXML(stringSection, resourceSection, 0)).append('\n');
+        Iterator<Chunk> iterator = chunks.iterator();
+        int indents = 0;
+        List<String> namespaceXmlList = new ArrayList<String>();
+
+        while (iterator.hasNext()) {
+            Chunk chunk = iterator.next();
+            if (chunk.getChunkType() == ChunkType.END_TAG) {
+                indents--;
+            }
+
+            if (chunk.getChunkType() == ChunkType.START_NAMESPACE) {
+                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, indents));
+            } else if (chunk.getChunkType() == ChunkType.END_NAMESPACE) {
+                // ignore
+            } else {
+                if (namespaceXmlList.isEmpty()) {
+                    xmlStrbui.append(chunk.toXML(stringSection, resourceSection, indents)).append('\n');
+                } else {
+                    xmlStrbui.append(appendNameSpace(chunk.toXML(stringSection, resourceSection, indents), namespaceXmlList)).append('\n');
+                    namespaceXmlList.clear();
+                }
+            }
+
+            if (chunk.getChunkType() == ChunkType.START_TAG) {
+                indents++;
+            }
+        }
+        return xmlStrbui.toString();
+    }
+
+    private String appendNameSpace(String preChunkXml, List<String> namespaceXmlList) {
+        StringBuilder strbui = new StringBuilder(preChunkXml);
+        int index;
+        if ((index = strbui.indexOf("\n")) == -1 && (index = strbui.indexOf(" ")) == -1
+                && (index = strbui.indexOf("/>")) == -1 && (index = strbui.indexOf(">")) == -1) {
+            throw new RuntimeException("Append name space fail. chunk xml: " + preChunkXml);
+        }
+        StringBuilder namespaceStrbui = new StringBuilder();
+        for (String namespaceXml : namespaceXmlList) {
+            namespaceStrbui.append("\n\t");
+            namespaceStrbui.append(namespaceXml);
+        }
+        strbui.insert(index, namespaceStrbui.toString());
+        return strbui.toString();
     }
 
     private static void log(String format, Object... arguments) {
