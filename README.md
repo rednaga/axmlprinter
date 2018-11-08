@@ -13,7 +13,7 @@ The default use case would be to compile the library;
 
 Then run the library;
 
-```java -jar build/libs/axmlprinter-0.1.5.jar <target>```
+```java -jar build/libs/axmlprinter-*.jar <target>```
 
 ## Contributing
 Contributions welcome! Please follow the simple steps;
