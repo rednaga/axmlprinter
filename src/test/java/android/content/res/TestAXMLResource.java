@@ -3,10 +3,9 @@ package android.content.res;
 import android.content.res.chunk.AttributeType;
 import android.content.res.chunk.types.Attribute;
 import android.content.res.chunk.types.StartTag;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -16,15 +15,16 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author tstrazzere
  */
-@RunWith(Enclosed.class)
 public class TestAXMLResource {
-    public static class FunctionalTest {
+
+    @Nested
+    class FunctionalTest {
 
         // Legacy files from original repo
         String[] oldTestFiles = {"test.xml", "test1.xml", "test2.xml", "test3.xml"};
@@ -34,7 +34,7 @@ public class TestAXMLResource {
 
         AXMLResource underTest;
 
-        @Before
+        @BeforeEach
         public void setUp() {
             underTest = new AXMLResource();
         }

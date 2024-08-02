@@ -1,14 +1,13 @@
 package android.content.res;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.ChunkUtil;
@@ -25,9 +24,10 @@ import android.content.res.chunk.types.TextTag;
 /**
  * @author tstrazzere
  */
-@RunWith(Enclosed.class)
 public class TestChunkUtil {
-    public static class UnitTest {
+
+    @Nested
+    class UnitTest {
 
         @Test
         public void testReadChunkType() throws IOException {
@@ -66,7 +66,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.RESOURCE_SECTION.getIntType(), 8, 0);
 
             if (!(ChunkUtil.createChunk(mockReader) instanceof ResourceSection)) {
-                throw new AssertionError("Expected AXMLHeader chunk!");
+                throw new AssertionError("Expected ResourceSection chunk!");
             }
         }
 
@@ -76,7 +76,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.STRING_SECTION.getIntType(), 0);
 
             if (!(ChunkUtil.createChunk(mockReader) instanceof StringSection)) {
-                throw new AssertionError("Expected AXMLHeader chunk!");
+                throw new AssertionError("Expected StringSection chunk!");
             }
         }
 
@@ -86,7 +86,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.BUFFER.getIntType(), 0);
 
             if (!(ChunkUtil.createChunk(mockReader) instanceof Buffer)) {
-                throw new AssertionError("Expected AXMLHeader chunk!");
+                throw new AssertionError("Expected Buffer chunk!");
             }
         }
 
@@ -109,7 +109,6 @@ public class TestChunkUtil {
             }
 
             assertEquals(false, ((NameSpace) chunk).isStart());
-
         }
 
         @Test

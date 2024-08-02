@@ -1,21 +1,21 @@
-apply plugin: 'java'
-apply plugin: 'jacoco'
-apply plugin: 'com.github.kt3k.coveralls'
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.8.4'
+}
 
 version = '0.1.7'
 
 repositories {
     mavenCentral()
-    jcenter()
+    // You can include other repositories if needed
 }
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
-    }
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+    testImplementation 'org.mockito:mockito-core:5.9.0'
+    // testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
 allprojects {
@@ -26,22 +26,28 @@ allprojects {
 
 jacocoTestReport {
     reports {
-        html.enabled = true
-        xml.enabled = true
-        csv.enabled = false
+        html.required.set(true)
+        xml.required.set(true)
+        csv.required.set(false)
     }
 }
 
-dependencies {
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:1.10.19'
-}
-
-jar {
+tasks.jar {
     manifest {
         attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
     }
 
-    processResources.inputs.property('version', version)
-    processResources.expand('version': version)
+    processResources {
+        inputs.property('version', version)
+        expand('version': version)
+    }
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs(
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    )
 }

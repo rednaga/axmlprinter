@@ -17,6 +17,8 @@ package android.content.res;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Simple helper class that allows reading of integers.
@@ -27,9 +29,15 @@ import java.io.InputStream;
  */
 public class IntReader {
 
+    private static final int BYTE_LENGTH = 1;
+    private static final int SHORT_LENGTH = 2;
+    private static final int INT_LENGTH = 4;
+
     private InputStream stream;
     private boolean bigEndian;
     private int bytesRead;
+
+	private static final Logger LOGGER = Logger.getLogger(IntReader.class.getName());
 
     public IntReader(InputStream stream, boolean bigEndian) {
         reset(stream, bigEndian);
@@ -55,22 +63,22 @@ public class IntReader {
             try {
                 stream.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Error closing stream", e);
             }
             reset(null, false);
         }
     }
 
     public int readByte() throws IOException {
-        return readInt(1);
+        return readInt(BYTE_LENGTH);
     }
-
+ 
     public int readShort() throws IOException {
-        return readInt(2);
+        return readInt(SHORT_LENGTH);
     }
-
+ 
     public int readInt() throws IOException {
-        return readInt(4);
+        return readInt(INT_LENGTH);
     }
 
     /**
@@ -81,7 +89,7 @@ public class IntReader {
      * @throws IOException
      */
     public int readInt(int length) throws IOException {
-        if ((length < 0) || (length > 4)) {
+        if ((length < 0) || (length > INT_LENGTH)) {
             throw new IllegalArgumentException();
         }
         int result = 0;
@@ -126,7 +134,7 @@ public class IntReader {
     }
 
     public void skipInt() throws IOException {
-        skip(4);
+        skip(INT_LENGTH);
     }
 
     public int getBytesRead() {

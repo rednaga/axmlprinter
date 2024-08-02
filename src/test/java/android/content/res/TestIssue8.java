@@ -3,10 +3,9 @@ package android.content.res;
 import android.content.res.chunk.AttributeType;
 import android.content.res.chunk.types.Attribute;
 import android.content.res.chunk.types.StartTag;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -16,22 +15,23 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author tstrazzere
  */
-@RunWith(Enclosed.class)
 public class TestIssue8 {
-    public static class FunctionalTest {
+
+    @Nested
+    class FunctionalTest {
 
         // Large file with weird tricks that broke tools in the past
         String issue8 = "qihoo_jiagu_issue8.xml";
 
         AXMLResource underTest;
 
-        @Before
+        @BeforeEach
         public void setUp() {
             underTest = new AXMLResource();
         }
@@ -52,7 +52,7 @@ public class TestIssue8 {
             underTest = new AXMLResource(testStream);
             String xml = underTest.toXML();
 
-            try {
+            // try {
                 Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes()));
                 Node manifestNode = document.getFirstChild();
                 NamedNodeMap manifestNodeAttributes = manifestNode.getAttributes();
@@ -60,10 +60,10 @@ public class TestIssue8 {
                 assertEquals("3133", manifestNodeAttributes.getNamedItem("android:versionCode").getNodeValue());
                 assertEquals("1.9.3", manifestNodeAttributes.getNamedItem("android:versionName").getNodeValue());
                 assertEquals("com.faithcomesbyhearing.android.pt.bibleis", manifestNodeAttributes.getNamedItem("package").getNodeValue());
-            } catch (SAXException e) {
-                // Is not xml
-                assertTrue(false);
-            }
+            // } catch (SAXException e) {
+            //     // Is not xml
+            //     assertTrue(false);
+            // }
         }
 
         @Test

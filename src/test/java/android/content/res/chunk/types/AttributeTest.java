@@ -16,25 +16,24 @@
 package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class AttributeTest extends TestCase {
+public class AttributeTest {
 
     private Attribute underTest;
 
     private IntReader mockReader;
 
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the attribute data
         when(mockReader.readInt()).thenReturn(0x35, 0x60, 0x10, 0x3000008, 0x2C);
@@ -42,6 +41,7 @@ public class AttributeTest extends TestCase {
         underTest = new Attribute(mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
                 // uri
@@ -57,6 +57,6 @@ public class AttributeTest extends TestCase {
         };
 
         byte[] actual = underTest.toBytes();
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

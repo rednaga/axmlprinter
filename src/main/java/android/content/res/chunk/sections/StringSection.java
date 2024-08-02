@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class StringSection extends GenericChunkSection implements Chunk, ChunkSection {
 
@@ -82,37 +83,61 @@ public class StringSection extends GenericChunkSection implements Chunk, ChunkSe
         }
     }
 
-    // TODO : Ensure we goto the proper offset in the case it isn't in proper order
-    private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader) throws IOException {
-        int offset = 0;
-        for (PoolItem item : pool) {
-            // TODO: This assumes that the pool is ordered...
-            inputReader.skip(item.getOffset() - offset);
-            offset = item.getOffset();
-
-            int length = 0;
-            if ((flags & UTF8_FLAG) != 0) {
-                length = inputReader.readByte();
-                offset += 1;
-            } else {
-                length = inputReader.readShort();
-                offset += 2;
-            }
-
-            StringBuilder result = new StringBuilder(length);
-            for (; length != 0; length -= 1) {
-                if ((flags & UTF8_FLAG) != 0) {
-                    result.append((char) inputReader.readByte());
-                    offset += 1;
-                } else {
-                    result.append((char) inputReader.readShort());
-                    offset += 2;
-                }
-            }
-
-            item.setString(result.toString());
-        }
+private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader) throws IOException {
+    // Create a list of indices to maintain the original order
+    List<Integer> indices = new ArrayList<>();
+    for (int i = 0; i < pool.size(); i++) {
+        indices.add(i);
     }
+
+    // Sort indices based on the offsets of the pool items
+    indices.sort((i1, i2) -> Integer.compare(pool.get(i1).getOffset(), pool.get(i2).getOffset()));
+
+    int currentStreamPosition = 0;
+
+    // Temporary storage for strings
+    String[] results = new String[pool.size()];
+
+    // Read data in the order determined by sorted indices
+    for (int index : indices) {
+        PoolItem item = pool.get(index);
+        int targetOffset = item.getOffset();
+
+        // Move to the target offset, skip forward if needed
+        if (targetOffset > currentStreamPosition) {
+            inputReader.skip(targetOffset - currentStreamPosition);
+            currentStreamPosition = targetOffset;
+        }
+
+        int length = 0;
+        if ((flags & UTF8_FLAG) != 0) {
+            length = inputReader.readByte();
+            currentStreamPosition += 1;
+        } else {
+            length = inputReader.readShort();
+            currentStreamPosition += 2;
+        }
+
+        StringBuilder result = new StringBuilder(length);
+        for (; length != 0; length -= 1) {
+            if ((flags & UTF8_FLAG) != 0) {
+                result.append((char) inputReader.readByte());
+                currentStreamPosition += 1;
+            } else {
+                result.append((char) inputReader.readShort());
+                currentStreamPosition += 2;
+            }
+        }
+
+        // Store the result temporarily
+        results[index] = result.toString();
+    }
+
+    // Assign results back to the pool items in the original order
+    for (int i = 0; i < pool.size(); i++) {
+        pool.get(i).setString(results[i]);
+    }
+}
 
     public int getStringIndex(String string) {
         if (string != null) {

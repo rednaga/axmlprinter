@@ -17,35 +17,35 @@ package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class TextTagTest extends TestCase {
+public class TextTagTest {
 
     private TextTag underTest;
 
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the text tag data
         when(mockReader.readInt()).thenReturn(7 * 4, 0x17, 0xFFFFFFFF, 0x1C, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
 
-        mockChunkType = mock(ChunkType.class);
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.TEXT_TAG.getIntType());
+        mockChunkType = ChunkType.TEXT_TAG;
 
         underTest = new TextTag(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
                 // TEXT_TAG
@@ -65,6 +65,6 @@ public class TextTagTest extends TestCase {
         };
 
         byte[] actual = underTest.toBytes();
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

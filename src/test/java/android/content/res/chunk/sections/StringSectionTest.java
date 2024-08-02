@@ -2,25 +2,25 @@ package android.content.res.chunk.sections;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Created by diff on 9/29/15.
  */
-public class StringSectionTest extends TestCase {
+public class StringSectionTest {
 
     private StringSection underTest;
 
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the string section data
         when(mockReader.readInt()).thenReturn(
@@ -47,12 +47,12 @@ public class StringSectionTest extends TestCase {
                 0x69, // i
                 0x6D); // m
 
-        mockChunkType = mock(ChunkType.class);
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.STRING_SECTION.getIntType());
+        mockChunkType = ChunkType.STRING_SECTION;
 
         underTest = new StringSection(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
                 // STRING_SECTION
@@ -85,6 +85,6 @@ public class StringSectionTest extends TestCase {
         };
 
         byte[] actual = underTest.toBytes();
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

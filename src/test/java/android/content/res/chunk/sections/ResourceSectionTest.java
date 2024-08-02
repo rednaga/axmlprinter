@@ -18,18 +18,19 @@ package android.content.res.chunk.sections;
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.types.GenericChunk;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class ResourceSectionTest extends TestCase {
+public class ResourceSectionTest {
     // Implement a new type of Generic chunk just to test specific functionality
     protected class TestResourceSection extends ResourceSection {
         public TestResourceSection(ChunkType chunkType, IntReader inputReader) {
@@ -51,21 +52,20 @@ public class ResourceSectionTest extends TestCase {
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the size read -- however this should /not/ be the output!
         // We expect that the section truncates the to proper length since it's assumed to have been
         // modified since the size differs
         when(mockReader.readInt()).thenReturn(0xBB60);
 
-        mockChunkType = mock(ChunkType.class);
+        mockChunkType = ChunkType.RESOURCE_SECTION;
 
         underTest = new TestResourceSection(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         // (chunk type) RESOURCE_SECTION + (size) 0xBB60 + (int[]) resourceIDs
         byte[] expected = {
@@ -85,10 +85,8 @@ public class ResourceSectionTest extends TestCase {
                 (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x00
         };
 
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.RESOURCE_SECTION.getIntType());
-
         byte[] actual = underTest.toBytes();
 
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

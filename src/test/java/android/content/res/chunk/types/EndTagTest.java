@@ -17,35 +17,35 @@ package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class EndTagTest extends TestCase {
+public class EndTagTest {
 
     private EndTag underTest;
 
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the end tag data
         when(mockReader.readInt()).thenReturn(0x18, 0x19, 0xFFFFFFFF, 0xFFFFFFFF, 0x46);
 
-        mockChunkType = mock(ChunkType.class);
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.END_TAG.getIntType());
+        mockChunkType = ChunkType.END_TAG;
 
         underTest = new EndTag(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
                 // END_TAG
@@ -63,6 +63,6 @@ public class EndTagTest extends TestCase {
         };
 
         byte[] actual = underTest.toBytes();
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

@@ -17,35 +17,35 @@ package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class StartTagTest extends TestCase {
+public class StartTagTest {
 
     private StartTag underTest;
 
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the namespace data
         when(mockReader.readInt()).thenReturn(9 * 4, 0x17, 0xFFFFFFFF, 0xFFFFFFFF, 0x41, 0x140014, 0, 0);
 
-        mockChunkType = mock(ChunkType.class);
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.START_TAG.getIntType());
+        mockChunkType = ChunkType.START_TAG;
 
         underTest = new StartTag(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
                 // START_TAG
@@ -69,6 +69,6 @@ public class StartTagTest extends TestCase {
         };
 
         byte[] actual = underTest.toBytes();
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }

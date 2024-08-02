@@ -1,6 +1,7 @@
 package android.content.res;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -8,55 +9,62 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.EOFException;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author tstrazzere
  */
-@RunWith(Enclosed.class)
 public class TestIntReader {
 
-    public static class UnitTest {
+    @Nested
+    class UnitTest {
 
         InputStream mockStream;
-
         IntReader underTest;
 
-        @Before
+        @BeforeEach
         public void setUp() {
             mockStream = mock(InputStream.class);
-            underTest = new IntReader(mockStream, true);
+            underTest = new IntReader(mockStream, true); // Start with big-endian mode
         }
 
         @Test
         public void testClose() throws IOException {
             underTest.close();
-
             verify(mockStream, times(1)).close();
         }
 
         @Test
         public void testReadShort() throws IOException {
-            underTest.readShort();
+            // Ensure the mock returns exactly two bytes for the short read
+            when(mockStream.read()).thenReturn(0x01, 0x02, -1);
 
+            // Expect 0x0102 in big-endian order
+            assertEquals((0x01 << 8) | 0x02, underTest.readShort());
             verify(mockStream, times(2)).read();
         }
 
         @Test
         public void testReadByte() throws IOException {
-            underTest.readByte();
+            // Ensure the mock returns exactly one byte
+            when(mockStream.read()).thenReturn(0x01, -1);
 
+            // Expect single byte value 0x01
+            assertEquals(0x01, underTest.readByte());
             verify(mockStream, times(1)).read();
         }
 
         @Test
         public void testReadInt() throws IOException {
-            underTest.readInt();
+            // Ensure the mock returns exactly four bytes for the integer read
+            when(mockStream.read()).thenReturn(0x01, 0x02, 0x03, 0x04, -1);
 
+            // Expect 0x01020304 in big-endian order
+            assertEquals((0x01 << 24) | (0x02 << 16) | (0x03 << 8) | 0x04, underTest.readInt());
             verify(mockStream, times(4)).read();
         }
 
@@ -68,14 +76,15 @@ public class TestIntReader {
 
         @Test
         public void testSkips() throws IOException {
+            // Ensure the mock simulates skipping 8 and 4 bytes
             when(mockStream.skip(8)).thenReturn(8L);
             when(mockStream.skip(4)).thenReturn(4L);
 
-            // Nothing happens
+            // Skip no bytes
             underTest.skip(0);
-            // Skip 8
+            // Skip 8 bytes
             underTest.skip(8);
-            // Skip 4
+            // Skip 4 bytes (for int)
             underTest.skipInt();
 
             verify(mockStream, times(1)).skip(8);
@@ -84,65 +93,50 @@ public class TestIntReader {
 
         @Test
         public void testSkipFails() throws IOException {
-            when(mockStream.skip(4)).thenReturn(-1L);
+            // Simulate a failed skip
+            when(mockStream.skip(4)).thenReturn(0L);
 
-            try {
-                underTest.skipInt();
-                throw new AssertionError("Excepted exception!");
-            } catch (IOException exception) {
-                // Good case
-            }
+            assertThrows(EOFException.class, () -> underTest.skipInt());
         }
 
         @Test
         public void testReadIntFailsBadParams() {
-            try {
-                underTest.readInt(-1);
-                throw new AssertionError("Excepted exception!");
-            } catch (IllegalArgumentException exception) {
-                // Good case
-            } catch (IOException exception) {
-                throw new AssertionError("Unexcepted exception!");
-            }
-
-            try {
-                underTest.readInt(5);
-                throw new IllegalArgumentException("Excepted exception!");
-            } catch (IllegalArgumentException exception) {
-                // Good case
-            } catch (IOException exception) {
-                throw new AssertionError("Unexcepted exception!");
-            }
+            assertThrows(IllegalArgumentException.class, () -> underTest.readInt(-1));
+            assertThrows(IllegalArgumentException.class, () -> underTest.readInt(5));
         }
 
         @Test
         public void testReadIntFailsEOF() throws IOException {
+            // Simulate end-of-stream (EOF)
             when(mockStream.read()).thenReturn(-1);
-            try {
-                underTest.readInt(2);
-                throw new AssertionError("Excepted exception!");
-            } catch (IOException exception) {
-                // Good case
-            }
+
+            assertThrows(EOFException.class, () -> underTest.readInt(2));
         }
 
         @Test
         public void testReadIntBigEndian() throws IOException {
-            when(mockStream.read()).thenReturn(10).thenReturn(20).thenReturn(30).thenReturn(40);
+            // Ensure the mock returns four bytes
+            when(mockStream.read()).thenReturn(0x0A, 0x14, 0x1E, 0x28, -1);
 
-            assertEquals(10, underTest.readInt(1));
+            // First read: expect 0x0A
+            assertEquals(0x0A, underTest.readInt(1));
 
-            assertEquals(((20 << 16) | (30 << 8) | (40 << 0)), underTest.readInt(3));
+            // Next three bytes read: expect 0x141E28 in big-endian order
+            assertEquals((0x14 << 16) | (0x1E << 8) | 0x28, underTest.readInt(3));
         }
 
         @Test
         public void testReadIntLittleEndian() throws IOException {
-            underTest = new IntReader(mockStream, false);
-            when(mockStream.read()).thenReturn(10).thenReturn(20).thenReturn(30).thenReturn(40);
+            underTest = new IntReader(mockStream, false); // Little-endian mode
 
-            assertEquals(10, underTest.readInt(1));
+            // Ensure the mock returns four bytes
+            when(mockStream.read()).thenReturn(0x0A, 0x14, 0x1E, 0x28, -1);
 
-            assertEquals(((20 << 0) | (30 << 8) | (40 << 16)), underTest.readInt(3));
+            // First read: expect 0x0A
+            assertEquals(0x0A, underTest.readInt(1));
+
+            // Next three bytes read: expect 0x281E14 in little-endian order
+            assertEquals(0x14 | (0x1E << 8) | (0x28 << 16), underTest.readInt(3));
         }
     }
 }

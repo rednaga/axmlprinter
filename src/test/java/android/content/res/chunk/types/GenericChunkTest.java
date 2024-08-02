@@ -19,19 +19,20 @@ import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author tstrazzere
  */
-public class GenericChunkTest extends TestCase {
+public class GenericChunkTest {
 
     // Implement a new type of Generic chunk just to test specific functionality
     protected class TestChunk extends GenericChunk {
@@ -62,20 +63,18 @@ public class GenericChunkTest extends TestCase {
     private IntReader mockReader;
     private ChunkType mockChunkType;
 
-
-    @Override
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
         mockReader = mock(IntReader.class);
         // Mock the size read
         when(mockReader.readInt()).thenReturn(0xBB60);
 
-        mockChunkType = mock(ChunkType.class);
-        when(mockChunkType.getIntType()).thenReturn(ChunkType.AXML_HEADER.getIntType());
+        mockChunkType = ChunkType.AXML_HEADER;
 
         underTest = new TestChunk(mockChunkType, mockReader);
     }
 
+    @Test
     public void testToBytes() throws Exception {
         // (chunk type) AXML_HEADER + (size) 0xBB60 + (TestChunk.toBytes() addition) 0xFF
         byte[] expected = {
@@ -89,6 +88,6 @@ public class GenericChunkTest extends TestCase {
 
         byte[] actual = underTest.toBytes();
 
-        Assert.assertArrayEquals(expected, actual);
+        assertArrayEquals(expected, actual);
     }
 }
