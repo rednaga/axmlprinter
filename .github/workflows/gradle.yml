@@ -43,8 +43,16 @@ jobs:
     - name: Build JAR
       run: ./gradlew jar
 
+    - name: Extract metadata (tags, labels)
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}
+        tags: |
+          type=sha,format=short,prefix=
+
     - name: Upload JAR as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: axmlprinter-${{ github.sha.slice(0, 7) }}
+        name: axmlprinter-${{ steps.meta.outputs.tags }}
         path: build/libs/*.jar
