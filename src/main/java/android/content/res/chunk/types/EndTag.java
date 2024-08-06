@@ -23,6 +23,7 @@ import android.content.res.chunk.sections.StringSection;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 /**
  * Specific chunk for ending sections and/or namespaces
@@ -35,9 +36,11 @@ public class EndTag extends GenericChunk implements Chunk {
     private int commentIndex;
     private int namespaceUri;
     private int name;
+    private boolean mangled;
 
     public EndTag(ChunkType chunkType, IntReader inputReader) {
         super(chunkType, inputReader);
+        mangled = false;
     }
 
     /*
@@ -53,6 +56,17 @@ public class EndTag extends GenericChunk implements Chunk {
         name = inputReader.readInt();
     }
 
+    public boolean isMangled(StringSection stringSection) {
+        mangled = stringSection.getString(name).isEmpty();
+
+        return mangled;
+    }
+
+    public void setName(int newName) {
+        name = newName;
+        // Assume this is a fix for now
+        mangled = false;
+    }
     /*
      * (non-Javadoc)
      * 
@@ -60,7 +74,11 @@ public class EndTag extends GenericChunk implements Chunk {
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
+        if (stringSection.getString(name).isEmpty()) {
+            mangled = true;
+        }
+
         return indent(indent) + "</" + stringSection.getString(name) + ">";
     }
 

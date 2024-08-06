@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class GenericChunkTest {
         }
 
         @Override
-        public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+        public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> nameSpaces, int indent) {
             return null;
         }
 

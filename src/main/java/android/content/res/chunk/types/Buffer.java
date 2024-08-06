@@ -21,6 +21,7 @@ import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This "buffer" chunk is currently being used for empty space, though it might not be needed
@@ -74,7 +75,7 @@ public class Buffer implements Chunk {
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         return null;
     }
 

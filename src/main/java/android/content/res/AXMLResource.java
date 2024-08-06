@@ -22,7 +22,9 @@ import android.content.res.chunk.sections.StringSection;
 import android.content.res.chunk.types.AXMLHeader;
 import android.content.res.chunk.types.Attribute;
 import android.content.res.chunk.types.Chunk;
+import android.content.res.chunk.types.NameSpace;
 import android.content.res.chunk.types.StartTag;
+import android.content.res.chunk.types.EndTag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,14 +46,17 @@ public class AXMLResource {
     AXMLHeader header;
     StringSection stringSection;
     ResourceSection resourceSection;
+    List<NameSpace> nameSpaces;
     LinkedHashSet<Chunk> chunks;
 
     public AXMLResource() {
         chunks = new LinkedHashSet<Chunk>();
+        nameSpaces = new ArrayList<NameSpace>();
     }
 
     public AXMLResource(InputStream stream) throws IOException {
         chunks = new LinkedHashSet<Chunk>();
+        nameSpaces = new ArrayList<NameSpace>();
         if (!read(stream)) {
             throw new IOException();
         }
@@ -160,11 +165,11 @@ public class AXMLResource {
     }
 
     public void print() {
-
-        log("%s", header.toXML(stringSection, resourceSection, 0));
+        log("%s", header.toXML(stringSection, resourceSection, nameSpaces, 0));
         Iterator<Chunk> iterator = chunks.iterator();
         int indents = 0;
         List<String> namespaceXmlList = new ArrayList<String>();
+        int lastStartNameIndex = -1;
 
         while (iterator.hasNext()) {
             Chunk chunk = iterator.next();
@@ -173,14 +178,24 @@ public class AXMLResource {
             }
 
             if (chunk.getChunkType() == ChunkType.START_NAMESPACE) {
-                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, indents));
+                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, nameSpaces, indents));
+                nameSpaces.add((NameSpace)chunk);
             } else if (chunk.getChunkType() == ChunkType.END_NAMESPACE) {
                 // ignore
             } else {
+                if (chunk.getChunkType() == ChunkType.START_TAG && ((StartTag)chunk).isMangled(stringSection)) {
+                    ((StartTag)chunk).fixMangle(stringSection);
+                    lastStartNameIndex = stringSection.getStringIndex(((StartTag)chunk).getName(stringSection));
+                }
+                if (chunk.getChunkType() == ChunkType.END_TAG && ((EndTag)chunk).isMangled(stringSection)) {
+                    ((EndTag)chunk).setName(lastStartNameIndex);
+                    lastStartNameIndex = -1;
+                }
+
                 if (namespaceXmlList.isEmpty()) {
-                    log("%s", chunk.toXML(stringSection, resourceSection, indents));
+                    log("%s", chunk.toXML(stringSection, resourceSection, nameSpaces, indents));
                 } else {
-                    log("%s", appendNameSpace(chunk.toXML(stringSection, resourceSection, indents), namespaceXmlList));
+                    log("%s", appendNameSpace(chunk.toXML(stringSection, resourceSection, nameSpaces, indents), namespaceXmlList));
                     namespaceXmlList.clear();
                 }
             }
@@ -194,10 +209,12 @@ public class AXMLResource {
 
     public String toXML() {
         StringBuilder xmlStrbui = new StringBuilder();
-        xmlStrbui.append(header.toXML(stringSection, resourceSection, 0)).append('\n');
+        xmlStrbui.append(header.toXML(stringSection, resourceSection, nameSpaces, 0)).append('\n');
         Iterator<Chunk> iterator = chunks.iterator();
         int indents = 0;
         List<String> namespaceXmlList = new ArrayList<String>();
+
+        int lastStartNameIndex = -1;
 
         while (iterator.hasNext()) {
             Chunk chunk = iterator.next();
@@ -206,14 +223,23 @@ public class AXMLResource {
             }
 
             if (chunk.getChunkType() == ChunkType.START_NAMESPACE) {
-                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, indents));
+                namespaceXmlList.add(chunk.toXML(stringSection, resourceSection, nameSpaces, indents));
+                nameSpaces.add((NameSpace) chunk);
             } else if (chunk.getChunkType() == ChunkType.END_NAMESPACE) {
                 // ignore
             } else {
+                if (chunk.getChunkType() == ChunkType.START_TAG && ((StartTag)chunk).isMangled(stringSection)) {
+                    ((StartTag)chunk).fixMangle(stringSection);
+                    lastStartNameIndex = stringSection.getStringIndex(((StartTag)chunk).getName(stringSection));
+                }
+                if (chunk.getChunkType() == ChunkType.END_TAG && ((EndTag)chunk).isMangled(stringSection)) {
+                    ((EndTag)chunk).setName(lastStartNameIndex);
+                    lastStartNameIndex = -1;
+                }
                 if (namespaceXmlList.isEmpty()) {
-                    xmlStrbui.append(chunk.toXML(stringSection, resourceSection, indents)).append('\n');
+                    xmlStrbui.append(chunk.toXML(stringSection, resourceSection, nameSpaces, indents)).append('\n');
                 } else {
-                    xmlStrbui.append(appendNameSpace(chunk.toXML(stringSection, resourceSection, indents), namespaceXmlList)).append('\n');
+                    xmlStrbui.append(appendNameSpace(chunk.toXML(stringSection, resourceSection, nameSpaces, indents), namespaceXmlList)).append('\n');
                     namespaceXmlList.clear();
                 }
             }

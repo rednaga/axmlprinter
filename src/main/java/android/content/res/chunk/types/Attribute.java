@@ -24,6 +24,7 @@ import android.content.res.chunk.sections.StringSection;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 /**
  * Specific type of Chunk which contains the metadata
@@ -119,11 +120,16 @@ public class Attribute implements Chunk {
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         StringBuffer buffer = new StringBuffer();
         if ((uri - 1) > 0) {
-            buffer.append(stringSection.getString(uri - 1));
-            buffer.append(":");
+            for (NameSpace nameSpace : namespaceList) {
+                if (nameSpace.getUri() == uri) {
+                    buffer.append(stringSection.getString(nameSpace.getPrefix()));
+                    buffer.append(":");
+                    break;
+                }
+            }
         }
 
         buffer.append(stringSection.getString(name));

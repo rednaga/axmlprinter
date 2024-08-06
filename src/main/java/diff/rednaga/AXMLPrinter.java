@@ -57,7 +57,7 @@ public class AXMLPrinter {
 
         if (arguments[0].equalsIgnoreCase("-v") || arguments[0].equalsIgnoreCase("-version")) {
             System.out.printf("axmlprinter %s (http://github.com/rednaga/axmlprinter2)\n", VERSION);
-            System.out.printf("Copyright (C) 2015 Red Naga - Tim 'diff' Strazzere (strazz@gmail.com)\n");
+            System.out.printf("Copyright (C) 2015-2024 Red Naga - Tim 'diff' Strazzere (diff@protonmail.com)\n");
             return;
         }
 

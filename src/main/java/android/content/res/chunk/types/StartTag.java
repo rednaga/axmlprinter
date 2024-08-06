@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * StartTag type of Chunk, differs from a Namespace as there will be specific metadata inside of it
@@ -41,9 +42,11 @@ public class StartTag extends GenericChunk implements Chunk {
     private int attributeCount;
     private int classAttribute;
     private ArrayList<Attribute> attributes;
+    private boolean mangled;
 
     public StartTag(ChunkType chunkType, IntReader inputReader) {
         super(chunkType, inputReader);
+        mangled = false;
     }
 
     /*
@@ -98,6 +101,29 @@ public class StartTag extends GenericChunk implements Chunk {
         return stringSection.getString(name);
     }
 
+    public boolean isMangled(StringSection stringSection) {
+        mangled = stringSection.getString(name).isEmpty();
+
+        return mangled;
+    }
+
+    public void fixMangle(StringSection stringSection) {
+        int guessedTag = -1;
+        for (int i = 0; i < attributeCount; i++) {
+            if (stringSection.getString(attributes.get(i).getNameIndex()).contains("protectionLevel")) {
+                guessedTag = stringSection.getStringIndex("uses-permission");
+                break;
+            }
+        }
+
+        if (guessedTag == -1) {
+            // throw new IOException("Unknown start tag, unable to recover from AXML mangling");
+        }
+
+        mangled = false;
+        name = guessedTag;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -105,7 +131,7 @@ public class StartTag extends GenericChunk implements Chunk {
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         StringBuffer buffer = new StringBuffer();
         buffer.append(indent(indent));
         buffer.append("<");
@@ -114,7 +140,7 @@ public class StartTag extends GenericChunk implements Chunk {
 
         for (int i = 0; i < attributeCount; i++) {
             buffer.append(indent(indent + 1));
-            buffer.append(attributes.get(i).toXML(stringSection, resourceSection, indent));
+            buffer.append(attributes.get(i).toXML(stringSection, resourceSection, namespaceList, indent));
             buffer.append("\n");
         }
 

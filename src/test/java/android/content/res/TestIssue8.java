@@ -52,18 +52,18 @@ public class TestIssue8 {
             underTest = new AXMLResource(testStream);
             String xml = underTest.toXML();
 
-            // try {
+            try {
                 Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes()));
                 Node manifestNode = document.getFirstChild();
                 NamedNodeMap manifestNodeAttributes = manifestNode.getAttributes();
                 assertEquals("http://schemas.android.com/apk/res/android", manifestNodeAttributes.getNamedItem("xmlns:android").getNodeValue());
-                assertEquals("3133", manifestNodeAttributes.getNamedItem("android:versionCode").getNodeValue());
-                assertEquals("1.9.3", manifestNodeAttributes.getNamedItem("android:versionName").getNodeValue());
-                assertEquals("com.faithcomesbyhearing.android.pt.bibleis", manifestNodeAttributes.getNamedItem("package").getNodeValue());
-            // } catch (SAXException e) {
-            //     // Is not xml
-            //     assertTrue(false);
-            // }
+                assertEquals("14800", manifestNodeAttributes.getNamedItem("android:versionCode").getNodeValue());
+                assertEquals("1.4.8", manifestNodeAttributes.getNamedItem("android:versionName").getNodeValue());
+                assertEquals("cn.xiaochuankeji.zuiyouLite", manifestNodeAttributes.getNamedItem("package").getNodeValue());
+            } catch (SAXException e) {
+                // Is not xml
+                assertTrue(false);
+            }
         }
 
         @Test
@@ -109,9 +109,9 @@ public class TestIssue8 {
             underTest = new AXMLResource(new FileInputStream(file));
             StartTag startTag = underTest.getApplicationTag();
 
-            assertEquals(underTest.getStringSection().getString(startTag.getAttributes().get(3).getNameIndex()),
+            assertEquals(underTest.getStringSection().getString(startTag.getAttributes().get(9).getNameIndex()),
                     "name");
-            assertEquals(underTest.getStringSection().getString(startTag.getAttributes().get(3).getStringDataIndex()),
+            assertEquals(underTest.getStringSection().getString(startTag.getAttributes().get(9).getStringDataIndex()),
                     "test");
         }
     }

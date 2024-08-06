@@ -19,6 +19,7 @@ import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.PoolItem;
 import android.content.res.chunk.types.Chunk;
+import android.content.res.chunk.types.NameSpace;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -175,7 +176,7 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
     }
 
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         return null;
     }
 

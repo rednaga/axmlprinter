@@ -18,11 +18,13 @@ package android.content.res.chunk.sections;
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.types.Chunk;
+import android.content.res.chunk.types.NameSpace;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Concrete class for the section which is specifically for the resource ids.
@@ -86,7 +88,7 @@ public class ResourceSection extends GenericChunkSection implements Chunk, Chunk
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         return null;
     }
 

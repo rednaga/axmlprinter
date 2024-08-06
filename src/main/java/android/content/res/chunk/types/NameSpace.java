@@ -23,6 +23,7 @@ import android.content.res.chunk.sections.StringSection;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 /**
  * Namespace Chunk - used for denoting the borders of the XML boundries
@@ -83,7 +84,7 @@ public class NameSpace extends GenericChunk implements Chunk {
      * android.content.res.chunk.sections.ResourceSection, int)
      */
     @Override
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent) {
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         if (isStart()) {
             return indent(indent) + toString(stringSection);
         } else {

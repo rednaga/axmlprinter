@@ -21,6 +21,7 @@ import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Generic interface for everything that is at minimum a "chunk"
@@ -57,10 +58,11 @@ public interface Chunk {
     /**
      * @param stringSection
      * @param resourceSection
+     * @param namespaceList
      * @param indent
      * @return a String representation in XML form
      */
-    public String toXML(StringSection stringSection, ResourceSection resourceSection, int indent);
+    public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent);
 
     /**
      * Get the a byte[] for the chunk
