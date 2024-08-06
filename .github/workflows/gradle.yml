@@ -35,10 +35,12 @@ jobs:
       run: ./gradlew build
 
     - name: Generate coverage report and upload to Coveralls
+      env:
+        TERM: dumb
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       run: |
         ./gradlew jacocoTestReport
         ./gradlew coveralls
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Build JAR
       run: ./gradlew jar
