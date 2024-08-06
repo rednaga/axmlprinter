@@ -53,8 +53,7 @@ jobs:
 
     - name: Extract short SHA for artifact name
       id: short-sha
-      run: echo "sha_short=$(echo ${{ steps.meta.outputs.tags }} | cut -d: -f2)" >> $GITHUB_ENV
-
+      run: echo "sha_short=$(echo '${{ steps.meta.outputs.tags }}' | cut -d: -f2)" >> $GITHUB_ENV
 
     - name: Upload JAR as artifact
       uses: actions/upload-artifact@v3
