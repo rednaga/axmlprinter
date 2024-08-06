@@ -43,20 +43,8 @@ jobs:
     - name: Build JAR
       run: ./gradlew jar
 
-    - name: Extract metadata (tags, labels)
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ env.REGISTRY }}/${{ github.repository }}
-        tags: |
-          type=sha,format=short,prefix=
-
-    - name: Extract short SHA for artifact name
-      id: short-sha
-      run: echo "sha_short=$(echo '${{ steps.meta.outputs.tags }}' | cut -d: -f2)" >> $GITHUB_ENV
-
     - name: Upload JAR as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: axmlprinter-${{ env.sha_short }}
+        name: axmlprinter-jar
         path: build/libs/*.jar
