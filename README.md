@@ -26,13 +26,20 @@ Contributions welcome! Please follow the simple steps;
 If this is too much work, feel free to make an issue and upload a patch set for me to evaluate.
 
 ## Revision History
+### v0.3.0
+ - Fix all of issue #8
+  - Support out of order string tables
+  - Support "mangled" start tags
+  - Support other axml oddities
+### v0.2.0
+ - Fix the bulk of issue #8
 ### v0.1.0 (Initial Release)
  - "Just as good" as original code
  - 0% -> ~40% test coverage
 
 ## License
 
-    Copyright (c) 2015 Red Naga - Tim 'diff' Strazzere
+    Copyright (c) 2015-2024 Red Naga - Tim 'diff' Strazzere
     Copyright (c) 2008 Android4ME
 
     Licensed under the Apache License, Version 2.0 (the "License");
