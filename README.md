@@ -26,6 +26,9 @@ Contributions welcome! Please follow the simple steps;
 If this is too much work, feel free to make an issue and upload a patch set for me to evaluate.
 
 ## Revision History
+### v1.0.0
+ - Fix issue #5
+  - Proper parsing of protection levels
 ### v0.3.0
  - Fix all of issue #8
   - Support out of order string tables
