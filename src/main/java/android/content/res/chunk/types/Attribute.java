@@ -33,6 +33,16 @@ import java.util.List;
  */
 public class Attribute implements Chunk {
 
+    public static class Permission {
+        public static final int PROTECTION_MASK_BASE = 0xF;
+
+        public static final int PROTECTION_NORMAL = 0;
+        public static final int PROTECTION_DANGEROUS = 1;
+        public static final int PROTECTION_SIGNATURE = 2;
+        public static final int PROTECTION_SIGNATURE_OR_SYSTEM = 3;
+        public static final int PROTECTION_INTERNAL = 4;
+    }
+
     private int uri;
     private int name;
     private int stringData;
@@ -133,6 +143,9 @@ public class Attribute implements Chunk {
         }
 
         buffer.append(stringSection.getString(name));
+        if (stringSection.getString(name).equals("protectionLevel")) {
+            boolean derp = true;
+        }
 
         buffer.append("=\"");
 
@@ -153,11 +166,30 @@ public class Attribute implements Chunk {
             } else {
                 buffer.append("ERROR");
             }
+        } else if (attributeType == AttributeType.FLAGS.getIntType()) {
+            buffer.append(getProtectionString(data));
         }
 
         buffer.append("\"");
 
         return buffer.toString();
+    }
+
+    private String getProtectionString(int level) {
+        switch (level & Permission.PROTECTION_MASK_BASE) {
+            case Permission.PROTECTION_DANGEROUS:
+                return "dangerous";
+            case Permission.PROTECTION_NORMAL:
+                return "normal";
+            case Permission.PROTECTION_SIGNATURE:
+                return "signature";
+            case Permission.PROTECTION_SIGNATURE_OR_SYSTEM:
+                return "signatureOrSystem";
+            case Permission.PROTECTION_INTERNAL:
+                return "internal";
+            default:
+                return "????";
+        }
     }
 
     /*
