@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Red Naga
+ * Copyright 2015-2025 Red Naga
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package android.content.res.chunk.sections;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import android.content.res.chunk.types.Chunk;
 import android.content.res.chunk.types.GenericChunk;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ import java.io.IOException;
  *
  * @author tstrazzere
  */
-public abstract class GenericChunkSection extends GenericChunk implements Chunk, ChunkSection {
+public abstract class GenericChunkSection extends GenericChunk implements ChunkSection {
 
     public GenericChunkSection(ChunkType chunkType, IntReader reader) {
         super(chunkType, reader);

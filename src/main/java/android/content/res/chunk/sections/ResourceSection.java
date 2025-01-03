@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Red Naga
+ * Copyright 2015-2025 Red Naga
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package android.content.res.chunk.sections;
 
 import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
-import android.content.res.chunk.types.Chunk;
 import android.content.res.chunk.types.NameSpace;
 
 import java.io.IOException;
@@ -31,7 +30,7 @@ import java.util.List;
  *
  * @author tstrazzere
  */
-public class ResourceSection extends GenericChunkSection implements Chunk, ChunkSection {
+public class ResourceSection extends GenericChunkSection {
 
     // TODO : Make this an ArrayList so it's easier to add/remove
     protected ArrayList<Integer> resourceIDs;

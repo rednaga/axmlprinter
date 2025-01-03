@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Red Naga
+ * Copyright 2015-2025 Red Naga
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,10 +143,6 @@ public class Attribute implements Chunk {
         }
 
         buffer.append(stringSection.getString(name));
-        if (stringSection.getString(name).equals("protectionLevel")) {
-            boolean derp = true;
-        }
-
         buffer.append("=\"");
 
         // TODO : This should be a switch...

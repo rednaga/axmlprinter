@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Red Naga
+ * Copyright 2015-2025 Red Naga
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class AXMLPrinter {
 
         if (arguments[0].equalsIgnoreCase("-v") || arguments[0].equalsIgnoreCase("-version")) {
             System.out.printf("axmlprinter %s (http://github.com/rednaga/axmlprinter2)\n", VERSION);
-            System.out.printf("Copyright (C) 2015-2024 Red Naga - Tim 'diff' Strazzere (diff@protonmail.com)\n");
+            System.out.printf("Copyright (C) 2015-2025 Red Naga - Tim 'diff' Strazzere (diff@protonmail.com)\n");
             return;
         }
 

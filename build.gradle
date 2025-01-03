@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.8.4'
 }
 
 version = '1.0.0'
@@ -12,9 +11,10 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
-    testImplementation 'org.mockito:mockito-core:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core:5.15.2'
 }
 
 allprojects {
@@ -49,4 +49,8 @@ test {
         '--add-opens', 'java.base/java.io=ALL-UNNAMED',
         '--add-opens', 'java.base/java.util=ALL-UNNAMED'
     )
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }

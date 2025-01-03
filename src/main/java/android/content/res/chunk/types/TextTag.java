@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Red Naga
+ * Copyright 2015-2025 Red Naga
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author tstrazzere
  */
-public class TextTag extends GenericChunk implements Chunk {
+public class TextTag extends GenericChunk {
 
     private int lineNumber;
     private int commentIndex;
