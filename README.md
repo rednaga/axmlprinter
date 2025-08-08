@@ -42,7 +42,7 @@ If this is too much work, feel free to make an issue and upload a patch set for 
 
 ## License
 
-    Copyright (c) 2015-2024 Red Naga - Tim 'diff' Strazzere
+    Copyright (c) 2015-2025 Red Naga - Tim 'diff' Strazzere
     Copyright (c) 2008 Android4ME
 
     Licensed under the Apache License, Version 2.0 (the "License");
