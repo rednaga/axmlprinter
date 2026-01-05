@@ -1,0 +1,341 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package aapt.pb;
+
+option java_package = "com.android.aapt";
+option java_outer_classname = "Resources";
+
+// A string pool that wraps the binary form of the C++ class android::ResStringPool.
+message StringPool {
+  bytes data = 1;
+}
+
+// The position of a declared entity within a file.
+message SourcePosition {
+  uint32 line_number = 1;
+  uint32 column_number = 2;
+}
+
+// Developer friendly source file information for an entity in the resource table.
+message Source {
+  // The index of the string path within the source string pool of a ResourceTable.
+  uint32 path_idx = 1;
+  SourcePosition position = 2;
+}
+
+// The type of reference.
+enum Reference_Type {
+  // A plain reference (@ref).
+  REFERENCE = 0;
+  // An attribute reference (?ref).
+  ATTRIBUTE = 1;
+}
+
+// A reference to another resource (or symbolic type).
+message Reference {
+  Reference_Type type = 1;
+
+  // The resource ID (0xPPTTEEEE) of the resource being referenced.
+  // This is optional.
+  uint32 id = 2;
+
+  // The name of the resource being referenced.
+  // This is optional if id is set.
+  string name = 3;
+
+  // Whether this reference is referencing a private resource (@*package:type/entry).
+  bool private = 4;
+
+  // Whether this reference is dynamic.
+  bool is_dynamic = 5;
+
+  // The type flags if this is a dynamic reference.
+  uint32 type_flags = 6;
+
+  // True if the symbol should be allowed to be an offset (rewritten at link-time).
+  bool allow_raw = 7;
+}
+
+// A value that is a boolean.
+message Boolean {
+  bool value = 1;
+}
+
+// A value that is a reference ID.
+message Id {
+}
+
+// A value that is a string.
+message String {
+  string value = 1;
+}
+
+// A value that is a raw string.
+message RawString {
+  string value = 1;
+}
+
+// A value that is a styled string.
+message StyledString {
+  message Span {
+    string tag = 1;
+    uint32 first_char = 2;
+    uint32 last_char = 3;
+  }
+  
+  string value = 1;
+  repeated Span span = 2;
+}
+
+// A value that is a path to a file.
+message FileReference {
+  enum Type {
+    UNKNOWN = 0;
+    PNG = 1;
+    BINARY_XML = 2;
+    PROTO_XML = 3;
+  }
+
+  // The path of the file within the APK.
+  string path = 1;
+
+  // The type of file.
+  Type type = 2;
+}
+
+// A value that represents a primitive data type (int, float, bool, color, etc.).
+message Primitive {
+  oneof oneof_value {
+    NullType null_value = 1;
+    EmptyType empty_value = 2;
+    float float_value = 3;
+    uint32 dimension_value = 4;
+    uint32 fraction_value = 5;
+    int32 int_decimal_value = 6;
+    uint32 int_hexadecimal_value = 7;
+    uint32 boolean_value = 8;
+    uint32 color_argb8_value = 9;
+    uint32 color_rgb8_value = 10;
+    uint32 color_argb4_value = 11;
+    uint32 color_rgb4_value = 12;
+    float dimension_value_deprecated = 13 [deprecated = true];
+    float fraction_value_deprecated = 14 [deprecated = true];
+  }
+
+  message NullType {
+  }
+
+  message EmptyType {
+  }
+}
+
+// A value that represents an attribute with formatting information.
+message Attribute {
+  message Symbol {
+    Source source = 1;
+    string comment = 2;
+    Reference name = 3;
+    uint32 value = 4;
+    uint32 type = 5;
+  }
+
+  uint32 format_flags = 1;
+  int32 min_int = 2;
+  int32 max_int = 3;
+  repeated Symbol symbol = 4;
+}
+
+// A compound value representing a style.
+message Style {
+  message Entry {
+    Source source = 1;
+    string comment = 2;
+    Reference key = 3;
+    Item item = 4;
+  }
+
+  Reference parent = 1;
+  uint32 parent_source_idx = 2;
+  repeated Entry entry = 3;
+}
+
+// A compound value representing a <styleable> resource.
+message Styleable {
+  message Entry {
+    Source source = 1;
+    string comment = 2;
+    Reference attr = 3;
+  }
+
+  repeated Entry entry = 1;
+}
+
+// A value representing an array resource.
+message Array {
+  message Element {
+    Source source = 1;
+    string comment = 2;
+    Item item = 3;
+  }
+
+  repeated Element element = 1;
+}
+
+// A value representing a <plurals> resource.
+message Plural {
+  enum Arity {
+    ZERO = 0;
+    ONE = 1;
+    TWO = 2;
+    FEW = 3;
+    MANY = 4;
+    OTHER = 5;
+  }
+
+  message Entry {
+    Source source = 1;
+    string comment = 2;
+    Arity arity = 3;
+    Item item = 4;
+  }
+
+  repeated Entry entry = 1;
+}
+
+// Defines an abstract XmlNode that must be either an XmlElement or a text node.
+message XmlNode {
+  oneof node {
+    XmlElement element = 1;
+    string text = 2;
+  }
+  
+  // Source line and column info.
+  SourcePosition source = 3;
+}
+
+// An XML element.
+message XmlElement {
+  // Namespace declarations.
+  repeated XmlNamespace namespace_declaration = 1;
+
+  // The namespace URI of this element.
+  string namespace_uri = 2;
+
+  // The name of this element.
+  string name = 3;
+
+  // Attributes of this element.
+  repeated XmlAttribute attribute = 4;
+
+  // Children of this element.
+  repeated XmlNode child = 5;
+}
+
+// An XML namespace declaration.
+message XmlNamespace {
+  string prefix = 1;
+  string uri = 2;
+  
+  // Source line and column info.
+  SourcePosition source = 3;
+}
+
+// An XML attribute.
+message XmlAttribute {
+  // The namespace URI of this attribute.
+  string namespace_uri = 1;
+
+  // The name of this attribute.
+  string name = 2;
+
+  // The value of this attribute.
+  string value = 3;
+
+  // Source line and column info.
+  SourcePosition source = 4;
+
+  // The resource ID (0xPPTTEEEE) of this attribute's name.
+  uint32 resource_id = 5;
+
+  // The typed value of this attribute. 
+  // If this is not set, the attribute is treated as a string.
+  Item compiled_item = 6;
+}
+
+// An item is an abstract type. It represents a value that can appear inline in many places.
+message Item {
+  oneof value {
+    Reference ref = 1;
+    String str = 2;
+    RawString raw_str = 3;
+    StyledString styled_str = 4;
+    FileReference file = 5;
+    Id id = 6;
+    Primitive prim = 7;
+  }
+}
+
+// A CompoundValue is an abstract type. It represents a value that is a made of other values.
+message CompoundValue {
+  oneof value {
+    Attribute attr = 1;
+    Style style = 2;
+    Styleable styleable = 3;
+    Array array = 4;
+    Plural plural = 5;
+  }
+}
+
+// A value that represents a macro.
+message MacroBody {
+  string raw_string = 1;
+  StringPool style_string = 2;
+  repeated UntranslatableSection untranslatable_sections = 3;
+  repeated NamespaceAlias namespace_stack = 4;
+  SourcePosition source = 5;
+}
+
+message NamespaceAlias {
+  string prefix = 1;
+  string package_name = 2;
+  bool is_private = 3;
+}
+
+message UntranslatableSection {
+  uint64 start_index = 1;
+  uint64 end_index = 2;
+}
+
+// A Value is an abstract type that represents a value stored in a resource table.
+message Value {
+  // The source of this value.
+  Source source = 1;
+
+  // Developer provided comment.
+  string comment = 2;
+
+  // Whether the value can be overridden.
+  bool weak = 3;
+
+  oneof value {
+    Item item = 4;
+    CompoundValue compound_value = 5;
+  }
+}
+

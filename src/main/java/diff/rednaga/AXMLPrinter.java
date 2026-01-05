@@ -16,19 +16,25 @@
 package diff.rednaga;
 
 import android.content.res.AXMLResource;
+import android.content.res.ProtobufXMLResource;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Properties;
 
 /**
  * A slimmed down version of the original AXMLPrinter from Dmitry Skiba.
  * <p>
  * Prints xml document from Android's binary xml file.
+ * Supports both traditional AXML format and Protocol Buffers format.
  *
  * @author Tim Strazzere
  */
 public class AXMLPrinter {
 
+    private static final int AXML_MAGIC = 0x00080003;
+    
     private static String VERSION;
 
     static {
@@ -61,19 +67,54 @@ public class AXMLPrinter {
             return;
         }
 
+        File inputFile = new File(arguments[0]);
+        if (!inputFile.exists()) {
+            System.err.println("Error: File not found: " + arguments[0]);
+            return;
+        }
+
         FileInputStream fileInputStream = null;
         FileOutputStream fileOutputStream = null;
         try {
-            AXMLResource axmlResource = new AXMLResource();
-            fileInputStream = new FileInputStream(arguments[0]);
-            axmlResource.read(fileInputStream);
+            // Read file header to detect format
+            byte[] header = new byte[4];
+            fileInputStream = new FileInputStream(inputFile);
+            int bytesRead = fileInputStream.read(header);
+            fileInputStream.close();
+            
+            if (bytesRead < 4) {
+                System.err.println("Error: File too small to be a valid Android XML file");
+                return;
+            }
 
-            axmlResource.print();
+            // Detect format based on magic number
+            int magic = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            
+            fileInputStream = new FileInputStream(inputFile);
+            
+            if (magic == AXML_MAGIC) {
+                // Traditional AXML format
+                AXMLResource axmlResource = new AXMLResource();
+                axmlResource.read(fileInputStream);
+                axmlResource.print();
 
-            if (arguments.length > 1) {
-                File file = new File(arguments[1]);
-                fileOutputStream = new FileOutputStream(file);
-                axmlResource.write(fileOutputStream);
+                if (arguments.length > 1) {
+                    File file = new File(arguments[1]);
+                    fileOutputStream = new FileOutputStream(file);
+                    axmlResource.write(fileOutputStream);
+                }
+            } else if (ProtobufXMLResource.isProtobufFormat(header)) {
+                // Protocol Buffers format
+                ProtobufXMLResource protobufResource = new ProtobufXMLResource(fileInputStream);
+                protobufResource.print();
+                
+                // Note: Writing back protobuf format is not currently supported
+                if (arguments.length > 1) {
+                    System.err.println("Warning: Writing protobuf format back to AXML is not supported");
+                }
+            } else {
+                System.err.printf("Error: Unknown file format. Magic: 0x%08X%n", magic);
+                System.err.println("Expected AXML (0x00080003) or Protobuf format (0x0A...)");
             }
         } catch (Exception e) {
             e.printStackTrace();
