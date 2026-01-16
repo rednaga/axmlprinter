@@ -6,14 +6,50 @@ had used the library for years without much issue and it was fast/useful just fo
 Manifest files. In the past few years due to people mucking with AXML files and my own boredom, I've
 refactored most of the code to be tested and more useful in non-command line situations.
 
+## Features
+
+- **Dual Format Support**: Supports both traditional AXML format and Protocol Buffers (protobuf) format
+  - Traditional AXML format (used in standard APKs)
+  - Protobuf format (used in Android App Bundles / AAB files)
+- **Automatic Format Detection**: Automatically detects and handles the correct format
+- **Read/Write Support**: Full read and write support for traditional AXML format
+- **Read-Only Protobuf**: Protobuf format is read-only (conversion between formats is not supported)
+
 ## Usage
-The default use case would be to compile the library;
 
-```./gradlew jar```
+### Building
 
-Then run the library;
+Compile the library:
 
-```java -jar build/libs/axmlprinter-*.jar <target>```
+```bash
+./gradlew jar
+```
+
+### Command Line
+
+Run the library:
+
+```bash
+java -jar build/libs/axmlprinter-*.jar <target> [output]
+```
+
+**Arguments:**
+- `<target>`: Path to the binary XML file (AXML or protobuf format)
+- `[output]`: (Optional) Output file path for AXML format only
+
+**Examples:**
+
+```bash
+# Print AXML file to console
+java -jar build/libs/axmlprinter-*.jar AndroidManifest.xml
+
+# Print and save AXML file
+java -jar build/libs/axmlprinter-*.jar AndroidManifest.xml output.xml
+
+# Print protobuf format file (read-only)
+java -jar build/libs/axmlprinter-*.jar manifest.pb
+```
+
 
 ## Contributing
 Contributions welcome! Please follow the simple steps;
@@ -26,16 +62,33 @@ Contributions welcome! Please follow the simple steps;
 If this is too much work, feel free to make an issue and upload a patch set for me to evaluate.
 
 ## Revision History
+
+### v2.0.0
+ - **New Feature**: Protocol Buffers (protobuf) format support
+   - Support for Android App Bundle (AAB) XML format
+   - Automatic format detection
+   - Resource ID resolution for common Android framework resources
+ - **Improvements**:
+   - Enhanced error handling with detailed error messages
+   - Improved namespace handling with proper scoping
+   - Better null safety throughout the codebase
+   - Optimized file I/O handling
+   - Comprehensive unit test coverage for protobuf functionality
+   - Enhanced error messages in ChunkUtil with byte offset information
+
 ### v1.0.0
  - Fix issue #5
-  - Proper parsing of protection levels
+   - Proper parsing of protection levels
+
 ### v0.3.0
  - Fix all of issue #8
-  - Support out of order string tables
-  - Support "mangled" start tags
-  - Support other axml oddities
+   - Support out of order string tables
+   - Support "mangled" start tags
+   - Support other axml oddities
+
 ### v0.2.0
  - Fix the bulk of issue #8
+
 ### v0.1.0 (Initial Release)
  - "Just as good" as original code
  - 0% -> ~40% test coverage
