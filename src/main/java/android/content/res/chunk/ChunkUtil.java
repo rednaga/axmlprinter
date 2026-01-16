@@ -39,7 +39,7 @@ public class ChunkUtil {
             }
         }
 
-        throw new IOException("Unexpected tag!");
+        throw new IOException(String.format("Unexpected tag! 0x%08X at byte offset %d", type, reader.getBytesRead() - 4));
     }
 
     public static Chunk createChunk(IntReader reader) throws IOException {

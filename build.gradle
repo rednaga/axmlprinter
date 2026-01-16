@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'jacoco'
     id "com.github.ben-manes.versions" version "0.52.0"
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 version = '1.0.1'
@@ -11,10 +12,18 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.google.protobuf:protobuf-java:4.29.3'
+    
     testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.0-M2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.0.0-M2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.0-M2'
     testImplementation 'org.mockito:mockito-core:5.18.0'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:4.29.3'
+    }
 }
 
 allprojects {
@@ -35,6 +44,12 @@ tasks.jar {
     manifest {
         attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
     }
+    
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     processResources {
         inputs.property('version', version)
