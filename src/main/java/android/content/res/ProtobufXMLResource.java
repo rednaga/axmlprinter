@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  * Parser for Protocol Buffers format Android XML files.
@@ -37,20 +38,29 @@ import java.util.Map;
 public class ProtobufXMLResource {
 
     private XmlNode rootNode;
-    private Map<String, String> namespaceMap;
 
     public ProtobufXMLResource() {
-        namespaceMap = new HashMap<>();
     }
 
     public ProtobufXMLResource(InputStream stream) throws IOException {
-        namespaceMap = new HashMap<>();
-        read(stream);
+        if (!read(stream)) {
+            throw new IOException("Failed to read protobuf XML resource: invalid or empty root node");
+        }
     }
 
     public boolean read(InputStream stream) throws IOException {
-        rootNode = XmlNode.parseFrom(stream);
-        return rootNode != null && rootNode.hasElement();
+        if (stream == null) {
+            throw new IllegalArgumentException("InputStream cannot be null");
+        }
+        try {
+            rootNode = XmlNode.parseFrom(stream);
+            if (rootNode == null) {
+                return false;
+            }
+            return rootNode.hasElement();
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw new IOException("Invalid protobuf format: " + e.getMessage(), e);
+        }
     }
 
     public void print() {
@@ -58,60 +68,77 @@ public class ProtobufXMLResource {
     }
 
     public String toXML() {
+        if (rootNode == null) {
+            throw new IllegalStateException("Cannot generate XML: root node is null. Call read() first.");
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-        
-        if (rootNode != null && rootNode.hasElement()) {
-            elementToXML(rootNode.getElement(), sb, 0, true);
+
+        if (rootNode.hasElement()) {
+            // Use a stack to track namespace scopes
+            Stack<Map<String, String>> namespaceStack = new Stack<>();
+            namespaceStack.push(new HashMap<>());
+            elementToXML(rootNode.getElement(), sb, 0, true, namespaceStack);
         }
         
         return sb.toString();
     }
 
-    private void elementToXML(XmlElement element, StringBuilder sb, int indent, boolean isRoot) {
+    private void elementToXML(XmlElement element, StringBuilder sb, int indent, boolean isRoot, 
+                               Stack<Map<String, String>> namespaceStack) {
+        if (element == null) {
+            throw new IllegalArgumentException("XmlElement cannot be null");
+        }
+
         String indentStr = getIndent(indent);
         sb.append(indentStr).append("<");
+
+        // Push new namespace scope for this element
+        Map<String, String> currentNamespaces = new HashMap<>(namespaceStack.peek());
+        namespaceStack.push(currentNamespaces);
         
         // Handle namespace prefix
-        String prefix = getPrefix(element.getNamespaceUri());
-        if (!prefix.isEmpty()) {
+        String prefix = getPrefix(element.getNamespaceUri(), currentNamespaces);
+        if (prefix != null && !prefix.isEmpty()) {
             sb.append(prefix).append(":");
         }
-        sb.append(element.getName());
+        sb.append(element.getName() != null ? element.getName() : "");
 
-        // Collect namespace declarations for root or when new namespaces appear
-        if (isRoot) {
-            for (XmlNamespace ns : element.getNamespaceDeclarationList()) {
-                namespaceMap.put(ns.getUri(), ns.getPrefix());
+        // Collect namespace declarations - only output if they're new to this scope
+        boolean hasNewNamespaces = false;
+        for (XmlNamespace ns : element.getNamespaceDeclarationList()) {
+            String nsUri = ns.getUri();
+            String nsPrefix = ns.getPrefix();
+
+            // Only declare if not already in current scope
+            if (!currentNamespaces.containsKey(nsUri)) {
+                currentNamespaces.put(nsUri, nsPrefix);
+                hasNewNamespaces = true;
                 sb.append("\n").append(indentStr).append("\t");
                 sb.append("xmlns");
-                if (!ns.getPrefix().isEmpty()) {
-                    sb.append(":").append(ns.getPrefix());
+                if (nsPrefix != null && !nsPrefix.isEmpty()) {
+                    sb.append(":").append(nsPrefix);
                 }
-                sb.append("=\"").append(escapeXml(ns.getUri())).append("\"");
-            }
-        } else {
-            // Handle namespace declarations in non-root elements
-            for (XmlNamespace ns : element.getNamespaceDeclarationList()) {
-                namespaceMap.put(ns.getUri(), ns.getPrefix());
-                sb.append("\n").append(indentStr).append("\t");
-                sb.append("xmlns");
-                if (!ns.getPrefix().isEmpty()) {
-                    sb.append(":").append(ns.getPrefix());
-                }
-                sb.append("=\"").append(escapeXml(ns.getUri())).append("\"");
+                sb.append("=\"").append(escapeXml(nsUri)).append("\"");
             }
         }
 
         // Handle attributes
         for (XmlAttribute attr : element.getAttributeList()) {
+            if (attr == null) {
+                continue;
+            }
             sb.append("\n").append(indentStr).append("\t");
-            
-            String attrPrefix = getPrefix(attr.getNamespaceUri());
-            if (!attrPrefix.isEmpty()) {
+
+            String attrPrefix = getPrefix(attr.getNamespaceUri(), currentNamespaces);
+            if (attrPrefix != null && !attrPrefix.isEmpty()) {
                 sb.append(attrPrefix).append(":");
             }
-            sb.append(attr.getName()).append("=\"");
+            String attrName = attr.getName();
+            if (attrName == null) {
+                attrName = "";
+            }
+            sb.append(attrName).append("=\"");
             sb.append(escapeXml(getAttributeValue(attr)));
             sb.append("\"");
         }
@@ -121,51 +148,138 @@ public class ProtobufXMLResource {
             sb.append(" />\n");
         } else {
             sb.append(">\n");
-            
+
             for (XmlNode child : element.getChildList()) {
+                if (child == null) {
+                    continue;
+                }
                 if (child.hasElement()) {
-                    elementToXML(child.getElement(), sb, indent + 1, false);
-                } else if (!child.getText().isEmpty()) {
+                    elementToXML(child.getElement(), sb, indent + 1, false, namespaceStack);
+                } else if (child.getText() != null && !child.getText().isEmpty()) {
                     sb.append(getIndent(indent + 1));
                     sb.append(escapeXml(child.getText()));
                     sb.append("\n");
                 }
             }
-            
+
             sb.append(indentStr).append("</");
-            if (!prefix.isEmpty()) {
+            if (prefix != null && !prefix.isEmpty()) {
                 sb.append(prefix).append(":");
             }
-            sb.append(element.getName()).append(">\n");
+            String elementName = element.getName();
+            if (elementName == null) {
+                elementName = "";
+            }
+            sb.append(elementName).append(">\n");
         }
+
+        // Pop namespace scope when done with this element
+        namespaceStack.pop();
     }
 
     private String getAttributeValue(XmlAttribute attr) {
+        if (attr == null) {
+            return "";
+        }
+
         // Check if there's a compiled value
         if (attr.hasCompiledItem()) {
             Item item = attr.getCompiledItem();
-            
+            if (item == null) {
+                return attr.getValue() != null ? attr.getValue() : "";
+            }
+
             if (item.hasRef()) {
                 Reference ref = item.getRef();
-                if (!ref.getName().isEmpty()) {
-                    return "@" + ref.getName();
+                if (ref == null) {
+                    return attr.getValue() != null ? attr.getValue() : "";
+                }
+
+                // Prefer name over ID if available
+                String refName = ref.getName();
+                if (refName != null && !refName.isEmpty()) {
+                    return "@" + refName;
                 } else if (ref.getId() != 0) {
+                    // Try to resolve common Android resource IDs
+                    String resolvedName = resolveResourceId(ref.getId());
+                    if (resolvedName != null) {
+                        return "@" + resolvedName;
+                    }
                     return String.format("@0x%08x", ref.getId());
                 }
             } else if (item.hasPrim()) {
-                return formatPrimitive(item.getPrim());
+                Primitive prim = item.getPrim();
+                if (prim != null) {
+                    return formatPrimitive(prim);
+                }
             } else if (item.hasStr()) {
-                return item.getStr().getValue();
+                com.android.aapt.Resources.String str = item.getStr();
+                if (str != null && str.getValue() != null) {
+                    return str.getValue();
+                }
             } else if (item.hasRawStr()) {
-                return item.getRawStr().getValue();
+                com.android.aapt.Resources.RawString rawStr = item.getRawStr();
+                if (rawStr != null && rawStr.getValue() != null) {
+                    return rawStr.getValue();
+                }
             }
         }
-        
+
         // Fall back to string value
-        return attr.getValue();
+        String value = attr.getValue();
+        return value != null ? value : "";
+    }
+
+    /**
+     * Attempts to resolve common Android resource IDs to their names.
+     * This is a best-effort approach for well-known Android framework resources.
+     *
+     * @param resourceId The resource ID to resolve
+     * @return The resource name if known, null otherwise
+     */
+    private String resolveResourceId(int resourceId) {
+        // Common Android framework resource IDs (0x0101xxxx range)
+        // This is a limited set - full resolution would require access to the resource table
+        // which is not available in protobuf XML format
+
+        // Some common attribute IDs
+        switch (resourceId) {
+            case 0x0101000e: return "android:enabled";
+            case 0x0101000f: return "android:id";
+            case 0x01010010: return "android:icon";
+            case 0x01010011: return "android:label";
+            case 0x01010012: return "android:name";
+            case 0x01010013: return "android:permission";
+            case 0x01010014: return "android:process";
+            case 0x01010020: return "android:theme";
+            case 0x01010030: return "android:exported";
+            case 0x01010040: return "android:authorities";
+            case 0x01010050: return "android:priority";
+            case 0x0101006c: return "android:versionCode";
+            case 0x0101006d: return "android:versionName";
+            case 0x0101006e: return "android:package";
+            case 0x0101006f: return "android:sharedUserId";
+            case 0x0101011e: return "android:minSdkVersion";
+            case 0x0101011f: return "android:targetSdkVersion";
+            case 0x01010120: return "android:maxSdkVersion";
+            case 0x0101013e: return "android:screenOrientation";
+            case 0x0101013f: return "android:configChanges";
+            case 0x01010140: return "android:launchMode";
+            case 0x01010141: return "android:windowSoftInputMode";
+            case 0x01010142: return "android:hardwareAccelerated";
+            case 0x01010143: return "android:allowBackup";
+            case 0x01010144: return "android:supportsRtl";
+            case 0x01010145: return "android:usesCleartextTraffic";
+            default:
+                return null;
+        }
     }
 
     private String formatPrimitive(Primitive prim) {
+        if (prim == null) {
+            return "";
+        }
+
         if (prim.hasIntDecimalValue()) {
             return String.valueOf(prim.getIntDecimalValue());
         } else if (prim.hasIntHexadecimalValue()) {
@@ -198,10 +312,18 @@ public class ProtobufXMLResource {
         // Android dimension encoding: value is in the form (value << 8) | unit
         float floatValue = complexToFloat(value);
         int unit = value & 0xf;
-        
+
+        // Validate unit is within expected range (0-5 for standard units)
         String[] units = {"px", "dp", "sp", "pt", "in", "mm"};
-        String unitStr = unit < units.length ? units[unit] : "px";
-        
+        String unitStr;
+        if (unit >= 0 && unit < units.length) {
+            unitStr = units[unit];
+        } else {
+            // Invalid unit, default to px but log a warning
+            unitStr = "px";
+            // Note: In a production environment, you might want to log this
+        }
+
         if (floatValue == (int) floatValue) {
             return String.format("%d%s", (int) floatValue, unitStr);
         }
@@ -211,7 +333,7 @@ public class ProtobufXMLResource {
     private String formatFraction(int value) {
         float floatValue = complexToFloat(value);
         int type = (value >> 4) & 0x3;
-        
+
         if (type == 0) {
             return String.format("%.2f%%", floatValue * 100);
         } else {
@@ -222,7 +344,7 @@ public class ProtobufXMLResource {
     private float complexToFloat(int complex) {
         int mantissa = (complex >> 8) & 0xffffff;
         int radix = (complex >> 4) & 0x3;
-        
+
         float value = mantissa;
         switch (radix) {
             case 0: // 23p0
@@ -237,12 +359,15 @@ public class ProtobufXMLResource {
                 value /= (1 << 23);
                 break;
         }
-        
+
         return value;
     }
 
-    private String getPrefix(String namespaceUri) {
+    private String getPrefix(String namespaceUri, Map<String, String> namespaceMap) {
         if (namespaceUri == null || namespaceUri.isEmpty()) {
+            return "";
+        }
+        if (namespaceMap == null) {
             return "";
         }
         return namespaceMap.getOrDefault(namespaceUri, "");

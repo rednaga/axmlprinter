@@ -43,28 +43,42 @@ public class ChunkUtil {
     }
 
     public static Chunk createChunk(IntReader reader) throws IOException {
+        int positionBeforeRead = reader.getBytesRead();
         ChunkType chunkType = readChunkType(reader);
 
-        switch (chunkType) {
-            case AXML_HEADER:
-                return new AXMLHeader(chunkType, reader);
-            case STRING_SECTION:
-                return new StringSection(chunkType, reader);
-            case RESOURCE_SECTION:
-                return new ResourceSection(chunkType, reader);
-            case START_NAMESPACE:
-            case END_NAMESPACE:
-                return new NameSpace(chunkType, reader);
-            case START_TAG:
-                return new StartTag(chunkType, reader);
-            case END_TAG:
-                return new EndTag(chunkType, reader);
-            case TEXT_TAG:
-                return new TextTag(chunkType, reader);
-            case BUFFER:
-                return new Buffer(chunkType, reader);
-            default:
-                throw new IOException("Unexpected tag!");
+        try {
+            switch (chunkType) {
+                case AXML_HEADER:
+                    return new AXMLHeader(chunkType, reader);
+                case STRING_SECTION:
+                    return new StringSection(chunkType, reader);
+                case RESOURCE_SECTION:
+                    return new ResourceSection(chunkType, reader);
+                case START_NAMESPACE:
+                case END_NAMESPACE:
+                    return new NameSpace(chunkType, reader);
+                case START_TAG:
+                    return new StartTag(chunkType, reader);
+                case END_TAG:
+                    return new EndTag(chunkType, reader);
+                case TEXT_TAG:
+                    return new TextTag(chunkType, reader);
+                case BUFFER:
+                    return new Buffer(chunkType, reader);
+                default:
+                    throw new IOException(String.format(
+                        "Unexpected chunk type: %s (0x%08X) at byte offset %d. " +
+                        "This may indicate a corrupted or unsupported AXML file.",
+                        chunkType, chunkType.getIntType(), positionBeforeRead));
+            }
+        } catch (IOException e) {
+            // Re-throw with additional context if it's not already enhanced
+            if (!e.getMessage().contains("byte offset")) {
+                throw new IOException(String.format(
+                    "Error creating chunk of type %s (0x%08X) at byte offset %d: %s",
+                    chunkType, chunkType.getIntType(), positionBeforeRead, e.getMessage()), e);
+            }
+            throw e;
         }
     }
 }

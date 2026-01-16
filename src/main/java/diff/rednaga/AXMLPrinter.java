@@ -75,27 +75,34 @@ public class AXMLPrinter {
 
         FileInputStream fileInputStream = null;
         FileOutputStream fileOutputStream = null;
+        BufferedInputStream bufferedInputStream = null;
         try {
+            // Use BufferedInputStream with mark/reset to avoid double opening the file
+            fileInputStream = new FileInputStream(inputFile);
+            bufferedInputStream = new BufferedInputStream(fileInputStream);
+
+            // Mark the current position (we'll read up to 4 bytes)
+            bufferedInputStream.mark(4);
+
             // Read file header to detect format
             byte[] header = new byte[4];
-            fileInputStream = new FileInputStream(inputFile);
-            int bytesRead = fileInputStream.read(header);
-            fileInputStream.close();
-            
+            int bytesRead = bufferedInputStream.read(header);
+
             if (bytesRead < 4) {
                 System.err.println("Error: File too small to be a valid Android XML file");
                 return;
             }
 
+            // Reset to beginning of file after reading header
+            bufferedInputStream.reset();
+
             // Detect format based on magic number
             int magic = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN).getInt();
-            
-            fileInputStream = new FileInputStream(inputFile);
             
             if (magic == AXML_MAGIC) {
                 // Traditional AXML format
                 AXMLResource axmlResource = new AXMLResource();
-                axmlResource.read(fileInputStream);
+                axmlResource.read(bufferedInputStream);
                 axmlResource.print();
 
                 if (arguments.length > 1) {
@@ -105,26 +112,46 @@ public class AXMLPrinter {
                 }
             } else if (ProtobufXMLResource.isProtobufFormat(header)) {
                 // Protocol Buffers format
-                ProtobufXMLResource protobufResource = new ProtobufXMLResource(fileInputStream);
+                // Note: Protobuf format is read-only. Writing protobuf format back to AXML 
+                // is not supported as it requires conversion between two different binary formats.
+                ProtobufXMLResource protobufResource = new ProtobufXMLResource(bufferedInputStream);
                 protobufResource.print();
-                
-                // Note: Writing back protobuf format is not currently supported
+
                 if (arguments.length > 1) {
-                    System.err.println("Warning: Writing protobuf format back to AXML is not supported");
+                    System.err.println("Warning: Writing protobuf format back to AXML is not supported.");
+                    System.err.println("Protobuf format (used in Android App Bundles) cannot be converted to traditional AXML format.");
                 }
             } else {
                 System.err.printf("Error: Unknown file format. Magic: 0x%08X%n", magic);
                 System.err.println("Expected AXML (0x00080003) or Protobuf format (0x0A...)");
             }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            if (fileInputStream != null) {
-                fileInputStream.close();
+            if (bufferedInputStream != null) {
+                try {
+                    bufferedInputStream.close();
+                } catch (IOException e) {
+                    // Ignore close errors
+                }
             }
-
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    // Ignore close errors
+                }
+            }
             if (fileOutputStream != null) {
-                fileOutputStream.close();
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    // Ignore close errors
+                }
             }
         }
     }
