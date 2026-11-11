@@ -48,16 +48,35 @@ jacocoTestReport {
     }
 }
 
+// The jar task is what gets published: just our classes, with protobuf as a normal dependency of the library.
+// (It goes in its own directory so it can't clash with the runnable jar below, which has the same name.)
 tasks.jar {
-    manifest {
-        attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
-    }
-    
+    destinationDirectory = layout.buildDirectory.dir('library')
+
+    // Keep ./gradlew jar producing the runnable jar as well
+    finalizedBy 'cliJar'
+}
+
+// The runnable jar for the command line tool: java -jar build/libs/axmlprinter-<version>.jar
+tasks.register('cliJar', Jar) {
+    group = 'build'
+    description = 'Assembles the runnable command line jar, which bundles its dependencies.'
+
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    from sourceSets.main.output
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    
+
+    manifest {
+        attributes 'Main-Class': 'diff.rednaga.AXMLPrinter'
+    }
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('assemble') {
+    dependsOn 'cliJar'
 }
 
 // Fills in the version in axmlprinter.properties, which the command line tool prints

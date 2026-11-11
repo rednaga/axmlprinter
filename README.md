@@ -25,6 +25,10 @@ Compile the library:
 ./gradlew jar
 ```
 
+This builds the runnable command line jar, `build/libs/axmlprinter-<version>.jar`, which bundles its
+dependencies. The jar that is published for use as a library (`build/library/`) only contains this project's
+classes, and declares protobuf as a normal dependency.
+
 ### Command Line
 
 Run the library:
@@ -114,6 +118,8 @@ If this is too much work, feel free to make an issue and upload a patch set for 
    - A crafted string length can no longer cause an `OutOfMemoryError`
    - `AXMLResource.read` no longer relies on `InputStream.available()`
    - The protobuf printer chose `%p` for fractions from the wrong bits, and mishandled negative dimensions
+ - **Packaging**: the published library jar no longer bundles protobuf, it is declared as a dependency instead
+   (previously consumers got protobuf twice). The runnable jar for the command line is unchanged
  - **Housekeeping**: `.github` is no longer gitignored, removed the stale IntelliJ module file
 
 ### v2.1.0
