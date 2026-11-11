@@ -1,5 +1,5 @@
 # axmlprinter
-[![Build Status](https://travis-ci.org/rednaga/axmlprinter.svg?branch=master)](https://travis-ci.org/rednaga/axmlprinter) [![Coverage Status](https://img.shields.io/coveralls/rednaga/axmlprinter.svg)](https://coveralls.io/r/rednaga/axmlprinter?branch=master)
+[![Java CI with Gradle](https://github.com/rednaga/axmlprinter/actions/workflows/gradle.yml/badge.svg)](https://github.com/rednaga/axmlprinter/actions/workflows/gradle.yml) [![codecov](https://codecov.io/gh/rednaga/axmlprinter/graph/badge.svg)](https://codecov.io/gh/rednaga/axmlprinter) [![JitPack](https://jitpack.io/v/rednaga/axmlprinter.svg)](https://jitpack.io/#rednaga/axmlprinter)
 
 This is a heavily (almost 100%?) refactor of the Android4ME `axmlprinter` library/code. Personally I
 had used the library for years without much issue and it was fast/useful just for printing out Android

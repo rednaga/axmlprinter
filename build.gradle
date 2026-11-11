@@ -35,6 +35,12 @@ allprojects {
 }
 
 jacocoTestReport {
+    // The protobuf generated classes (com.android.aapt) dwarf the hand-written code and would
+    // make the coverage number meaningless, so only report on our own sources
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, exclude: ['com/android/aapt/**'])
+    }))
+
     reports {
         html.required.set(true)
         xml.required.set(true)
