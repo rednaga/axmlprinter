@@ -165,6 +165,8 @@ public class AXMLResource {
     }
 
     public void print() {
+        // Namespaces are rediscovered while rendering, so don't accumulate them across calls
+        nameSpaces.clear();
         log("%s", header.toXML(stringSection, resourceSection, nameSpaces, 0));
         Iterator<Chunk> iterator = chunks.iterator();
         int indents = 0;
@@ -209,6 +211,8 @@ public class AXMLResource {
 
     public String toXML() {
         StringBuilder xmlStrbui = new StringBuilder();
+        // Namespaces are rediscovered while rendering, so don't accumulate them across calls
+        nameSpaces.clear();
         xmlStrbui.append(header.toXML(stringSection, resourceSection, nameSpaces, 0)).append('\n');
         Iterator<Chunk> iterator = chunks.iterator();
         int indents = 0;
