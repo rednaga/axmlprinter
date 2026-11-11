@@ -28,6 +28,7 @@ import android.content.res.chunk.types.EndTag;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -90,12 +91,11 @@ public class AXMLResource {
 
     public boolean read(InputStream stream) throws IOException {
 
-        IntReader reader = new IntReader(stream, false);
+        // available() is only an estimate (and may be 0), so look ahead in the stream to find the end instead
+        PushbackInputStream lookahead = new PushbackInputStream(stream, 5);
+        IntReader reader = new IntReader(lookahead, false);
 
-        // Get an attempted size until we know the read size
-        int size = stream.available();
-
-        while ((size - reader.getBytesRead()) > 4) {
+        while (moreThanFourBytesRemain(lookahead)) {
             // This should just read all the chunks
             Chunk chunk = ChunkUtil.createChunk(reader);
 
@@ -251,6 +251,25 @@ public class AXMLResource {
             }
         }
         return xmlStrbui.toString();
+    }
+
+    /**
+     * Anything of four bytes or less can't be another chunk, so it is treated as trailing padding.
+     */
+    private static boolean moreThanFourBytesRemain(PushbackInputStream stream) throws IOException {
+        byte[] peek = new byte[5];
+        int count = 0;
+        while (count < peek.length) {
+            int read = stream.read(peek, count, peek.length - count);
+            if (read < 0) {
+                break;
+            }
+            count += read;
+        }
+        if (count > 0) {
+            stream.unread(peek, 0, count);
+        }
+        return count > 4;
     }
 
     private String appendNameSpace(String preChunkXml, List<String> namespaceXmlList) {
