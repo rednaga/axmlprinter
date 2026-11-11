@@ -78,7 +78,7 @@ public class StartTag extends GenericChunk {
 
     @Override
     public int getSize() {
-        return (9 * 4) + (attributeCount * 20);
+        return (9 * 4) + (attributes.size() * 20);
     }
 
     public ArrayList<Attribute> getAttributes() {
@@ -109,7 +109,7 @@ public class StartTag extends GenericChunk {
 
     public void fixMangle(StringSection stringSection) {
         int guessedTag = -1;
-        for (int i = 0; i < attributeCount; i++) {
+        for (int i = 0; i < attributes.size(); i++) {
             if (stringSection.getString(attributes.get(i).getNameIndex()).contains("protectionLevel")) {
                 guessedTag = stringSection.getStringIndex("uses-permission");
                 break;
@@ -138,7 +138,7 @@ public class StartTag extends GenericChunk {
         buffer.append(stringSection.getString(name));
         buffer.append("\n");
 
-        for (int i = 0; i < attributeCount; i++) {
+        for (int i = 0; i < attributes.size(); i++) {
             buffer.append(indent(indent + 1));
             buffer.append(attributes.get(i).toXML(stringSection, resourceSection, namespaceList, indent));
             buffer.append("\n");
