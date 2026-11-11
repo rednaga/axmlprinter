@@ -48,7 +48,7 @@ public class NameSpaceTest {
     @Test
     public void testToBytes() throws Exception {
         byte[] expected = {
-                // END_TAG
+                // START_NAMESPACE
                 (byte) 0x00, (byte) 0x01, (byte) 0x10, (byte) 0x00,
                 // size
                 (byte) 0x18, (byte) 0x00, (byte) 0x00, (byte) 0x00,

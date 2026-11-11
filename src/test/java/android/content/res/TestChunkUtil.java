@@ -1,6 +1,10 @@
 package android.content.res;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,12 +46,7 @@ public class TestChunkUtil {
             IntReader mockReader = mock(IntReader.class);
             when(mockReader.readInt()).thenReturn(-1);
 
-            try {
-                ChunkUtil.readChunkType(mockReader);
-                throw new AssertionError("Expected exception!");
-            } catch (IOException exception) {
-                // Good case
-            }
+            assertThrows(IOException.class, () -> ChunkUtil.readChunkType(mockReader));
         }
 
         @Test
@@ -55,9 +54,7 @@ public class TestChunkUtil {
             IntReader mockReader = mock(IntReader.class);
             when(mockReader.readInt()).thenReturn(ChunkType.AXML_HEADER.getIntType(), 0);
 
-            if (!(ChunkUtil.createChunk(mockReader) instanceof AXMLHeader)) {
-                throw new AssertionError("Expected AXMLHeader chunk!");
-            }
+            assertInstanceOf(AXMLHeader.class, ChunkUtil.createChunk(mockReader));
         }
 
         @Test
@@ -65,9 +62,7 @@ public class TestChunkUtil {
             IntReader mockReader = mock(IntReader.class);
             when(mockReader.readInt()).thenReturn(ChunkType.RESOURCE_SECTION.getIntType(), 8, 0);
 
-            if (!(ChunkUtil.createChunk(mockReader) instanceof ResourceSection)) {
-                throw new AssertionError("Expected ResourceSection chunk!");
-            }
+            assertInstanceOf(ResourceSection.class, ChunkUtil.createChunk(mockReader));
         }
 
         @Test
@@ -75,9 +70,7 @@ public class TestChunkUtil {
             IntReader mockReader = mock(IntReader.class);
             when(mockReader.readInt()).thenReturn(ChunkType.STRING_SECTION.getIntType(), 0);
 
-            if (!(ChunkUtil.createChunk(mockReader) instanceof StringSection)) {
-                throw new AssertionError("Expected StringSection chunk!");
-            }
+            assertInstanceOf(StringSection.class, ChunkUtil.createChunk(mockReader));
         }
 
         @Test
@@ -85,9 +78,7 @@ public class TestChunkUtil {
             IntReader mockReader = mock(IntReader.class);
             when(mockReader.readInt()).thenReturn(ChunkType.BUFFER.getIntType(), 0);
 
-            if (!(ChunkUtil.createChunk(mockReader) instanceof Buffer)) {
-                throw new AssertionError("Expected Buffer chunk!");
-            }
+            assertInstanceOf(Buffer.class, ChunkUtil.createChunk(mockReader));
         }
 
         @Test
@@ -96,19 +87,15 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.START_NAMESPACE.getIntType(), 0);
 
             Chunk chunk = ChunkUtil.createChunk(mockReader);
-            if (!(chunk instanceof NameSpace)) {
-                throw new AssertionError("Expected NameSpace chunk!");
-            }
+            assertInstanceOf(NameSpace.class, chunk);
 
-            assertEquals(true, ((NameSpace) chunk).isStart());
+            assertTrue(((NameSpace) chunk).isStart());
 
             when(mockReader.readInt()).thenReturn(ChunkType.END_NAMESPACE.getIntType(), 0);
             chunk = ChunkUtil.createChunk(mockReader);
-            if (!(chunk instanceof NameSpace)) {
-                throw new AssertionError("Expected NameSpace chunk!");
-            }
+            assertInstanceOf(NameSpace.class, chunk);
 
-            assertEquals(false, ((NameSpace) chunk).isStart());
+            assertFalse(((NameSpace) chunk).isStart());
         }
 
         @Test
@@ -117,9 +104,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.START_TAG.getIntType(), 0);
 
             Chunk chunk = ChunkUtil.createChunk(mockReader);
-            if (!(chunk instanceof StartTag)) {
-                throw new AssertionError("Expected StartTag chunk!");
-            }
+            assertInstanceOf(StartTag.class, chunk);
         }
 
         @Test
@@ -128,9 +113,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.END_TAG.getIntType(), 0);
 
             Chunk chunk = ChunkUtil.createChunk(mockReader);
-            if (!(chunk instanceof EndTag)) {
-                throw new AssertionError("Expected EndTag chunk!");
-            }
+            assertInstanceOf(EndTag.class, chunk);
         }
 
         @Test
@@ -139,9 +122,7 @@ public class TestChunkUtil {
             when(mockReader.readInt()).thenReturn(ChunkType.TEXT_TAG.getIntType(), 0);
 
             Chunk chunk = ChunkUtil.createChunk(mockReader);
-            if (!(chunk instanceof TextTag)) {
-                throw new AssertionError("Expected TextTag chunk!");
-            }
+            assertInstanceOf(TextTag.class, chunk);
         }
     }
 }

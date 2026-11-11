@@ -61,8 +61,7 @@ public class StringSectionTest {
                 (byte) (12 * 4), (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 // string count
                 (byte) 0x02, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                // TODO : Really should test this when I get a good sample
-                // style count
+                // style count (styles are covered separately once a sample with styles exists)
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 // string chunk flags
                 (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
