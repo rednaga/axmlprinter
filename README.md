@@ -63,6 +63,22 @@ If this is too much work, feel free to make an issue and upload a patch set for 
 
 ## Revision History
 
+### v2.1.0
+ - **Bug fixes**:
+   - String pools: UTF-8 pools are now parsed and written correctly (two-length encoding, real UTF-8
+     decoding), non-ASCII text no longer depends on the platform charset, and long strings are supported.
+     Written pools now include the null terminator and alignment Android expects
+   - `Attribute`: namespace prefixes are no longer dropped when the namespace URI is string index 0 or 1
+   - `StartTag`: size, XML output and mangle fixing now include attributes added after parsing
+     (e.g. through `injectApplicationAttribute`)
+   - `AXMLResource`: `print()`/`toXML()` no longer accumulate namespaces between calls, `write()` no longer
+     prints debug output to stdout, and injecting into a file with no `<application>` tag throws a clear
+     `IllegalStateException` instead of an NPE
+   - `IntReader.skip` no longer reports a legitimate short skip as end of file
+ - **Tests**: ~150 tests (up from ~60), now using real parsing instead of mocks where it matters, covering
+   the CLI, attribute rendering, string/resource sections, malformed input and the protobuf output path
+ - **Build**: Gradle 9.9.1, updated dependencies (protobuf plugin 0.10.1, JUnit 6.1.3, Mockito 5.24.0)
+
 ### v2.0.0
  - **New Feature**: Protocol Buffers (protobuf) format support
    - Support for Android App Bundle (AAB) XML format
