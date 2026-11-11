@@ -46,4 +46,21 @@ public class TestAXMLResourceRepeatedOutput {
         assertEquals(namespacesAfterToXml, resource.nameSpaces.size(), "print() must not accumulate namespaces");
         assertEquals(expected, resource.toXML());
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"test.xml", "large_from_malware.xml"})
+    void writeDoesNotPrintToStdout(String fixture) throws Exception {
+        AXMLResource resource = TestAXMLResource.load(fixture);
+
+        PrintStream original = System.out;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        try {
+            System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
+            resource.write(new ByteArrayOutputStream());
+        } finally {
+            System.setOut(original);
+        }
+
+        assertEquals("", captured.toString(StandardCharsets.UTF_8));
+    }
 }

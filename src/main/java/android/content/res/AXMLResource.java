@@ -127,7 +127,7 @@ public class AXMLResource {
 
         if ((header != null) && (stringSection != null) && (resourceSection != null)) {
             if (header.getSize() != reader.getBytesRead()) {
-                System.out.println("Potential issue as the bytes read is not equal to the amount of bytes in the file");
+                System.err.println("Potential issue as the bytes read is not equal to the amount of bytes in the file");
             }
             return true;
         }
@@ -143,11 +143,6 @@ public class AXMLResource {
             Chunk chunk = iterator.next();
             chunkSizes += chunk.getSize();
         }
-
-        System.out.println("String section size: " + stringSection.getSize());
-        System.out.println("Resource section size: " + resourceSection.getSize());
-        System.out.println("chunk section size: " + chunkSizes);
-        System.out.println("Size was " + ((2 * 4) + stringSection.getSize() + resourceSection.getSize() + chunkSizes));
 
         outputStream.write(ByteBuffer.allocate(8)
                 .order(ByteOrder.LITTLE_ENDIAN)
