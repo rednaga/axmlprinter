@@ -16,6 +16,7 @@
 package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
+import android.content.res.XmlFormat;
 import android.content.res.chunk.AttributeType;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
@@ -68,6 +69,9 @@ public class Attribute implements Chunk {
             }
             this.data = -1;
         } else {
+            if (data == null) {
+                throw new IllegalArgumentException("Attribute of type " + type + " needs a value, but data was null");
+            }
             this.data = (int) data;
         }
 
@@ -145,30 +149,47 @@ public class Attribute implements Chunk {
         buffer.append(stringSection.getString(name));
         buffer.append("=\"");
 
-        // TODO : This should be a switch...
-        if (attributeType == AttributeType.STRING.getIntType()) {
-            buffer.append(stringSection.getString(stringData));
-        } else if (attributeType == AttributeType.INT.getIntType()) {
-            buffer.append(data);
-        } else if (attributeType == AttributeType.RESOURCE.getIntType()) {
-            buffer.append("@");
-            buffer.append(Integer.toHexString(data).toUpperCase());
-        } else if (attributeType == AttributeType.BOOLEAN.getIntType()) {
-            // TODO : Double check this..
-            if (data == -1) {
-                buffer.append("true");
-            } else if (data == 0) {
-                buffer.append("false");
-            } else {
-                buffer.append("ERROR");
-            }
-        } else if (attributeType == AttributeType.FLAGS.getIntType()) {
-            buffer.append(getProtectionString(data));
-        }
+        buffer.append(valueToXML(stringSection));
 
         buffer.append("\"");
 
         return buffer.toString();
+    }
+
+    private String valueToXML(StringSection stringSection) {
+        if (attributeType == AttributeType.STRING.getIntType()) {
+            return XmlFormat.escape(stringSection.getString(stringData));
+        } else if (attributeType == AttributeType.INT.getIntType()) {
+            return String.valueOf(data);
+        } else if (attributeType == AttributeType.RESOURCE.getIntType()) {
+            return "@" + Integer.toHexString(data).toUpperCase();
+        } else if (attributeType == AttributeType.ATTR.getIntType()) {
+            return "?" + Integer.toHexString(data).toUpperCase();
+        } else if (attributeType == AttributeType.BOOLEAN.getIntType()) {
+            // TODO : Double check this..
+            if (data == -1) {
+                return "true";
+            } else if (data == 0) {
+                return "false";
+            }
+            return "ERROR";
+        } else if (attributeType == AttributeType.FLOAT.getIntType()) {
+            return String.valueOf(Float.intBitsToFloat(data));
+        } else if (attributeType == AttributeType.DIMEN.getIntType()) {
+            return XmlFormat.dimension(data);
+        } else if (attributeType == AttributeType.FRACTION.getIntType()) {
+            return XmlFormat.fraction(data);
+        } else if (attributeType == AttributeType.COLOR1.getIntType()) {
+            return String.format("#%08x", data);
+        } else if (attributeType == AttributeType.COLOR2.getIntType()) {
+            return String.format("#%06x", data & 0xFFFFFF);
+        } else if (attributeType == AttributeType.FLAGS.getIntType()
+                && "protectionLevel".equals(stringSection.getString(name))) {
+            return getProtectionString(data);
+        }
+
+        // Other flag values, and any type we don't know, are shown as hex rather than silently dropped
+        return "0x" + Integer.toHexString(data);
     }
 
     private String getProtectionString(int level) {
