@@ -22,6 +22,7 @@ import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
@@ -80,8 +81,7 @@ public class Attribute implements Chunk {
             attributeType = reader.readInt();
             data = reader.readInt();
         } catch (IOException exception) {
-            // TODO : Handle this better
-            exception.printStackTrace();
+            throw new UncheckedIOException(exception);
         }
     }
 

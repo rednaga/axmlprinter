@@ -143,7 +143,8 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
                 currentStreamPosition += 2;
             }
 
-            StringBuilder result = new StringBuilder(length);
+            // The length comes straight from the file, so it must not drive the allocation up front
+            StringBuilder result = new StringBuilder(Math.min(length, 1024));
             for (int i = 0; i < length; i++) {
                 result.append((char) inputReader.readShort());
             }
