@@ -73,7 +73,7 @@ public class ChunkUtil {
             }
         } catch (IOException e) {
             // Re-throw with additional context if it's not already enhanced
-            if (!e.getMessage().contains("byte offset")) {
+            if (e.getMessage() == null || !e.getMessage().contains("byte offset")) {
                 throw new IOException(String.format(
                     "Error creating chunk of type %s (0x%08X) at byte offset %d: %s",
                     chunkType, chunkType.getIntType(), positionBeforeRead, e.getMessage()), e);

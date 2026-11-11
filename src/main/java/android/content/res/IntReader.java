@@ -125,11 +125,19 @@ public class IntReader {
      * @throws IOException
      */
     public void skip(int bytes) throws IOException {
-        if (bytes > 0) {
-            if (stream.skip(bytes) != bytes) {
-                throw new EOFException();
+        // InputStream.skip may skip fewer bytes than requested without being at the end of the stream
+        int remaining = bytes;
+        while (remaining > 0) {
+            long skipped = stream.skip(remaining);
+            if (skipped <= 0) {
+                // Zero is ambiguous, so probe with a read to tell "can't skip" apart from the end of the stream
+                if (stream.read() == -1) {
+                    throw new EOFException();
+                }
+                skipped = 1;
             }
-            bytesRead += bytes;
+            remaining -= (int) skipped;
+            bytesRead += (int) skipped;
         }
     }
 

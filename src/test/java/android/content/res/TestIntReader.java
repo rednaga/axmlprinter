@@ -93,8 +93,9 @@ public class TestIntReader {
 
         @Test
         public void testSkipFails() throws IOException {
-            // Simulate a failed skip
+            // Simulate a skip that makes no progress because the stream is at its end
             when(mockStream.skip(4)).thenReturn(0L);
+            when(mockStream.read()).thenReturn(-1);
 
             assertThrows(EOFException.class, () -> underTest.skipInt());
         }

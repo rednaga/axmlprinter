@@ -64,6 +64,9 @@ public class AXMLResource {
 
     public void injectApplicationAttribute(Attribute attribute) {
         StartTag tag = getApplicationTag();
+        if (tag == null) {
+            throw new IllegalStateException("Unable to inject attribute, no <application> tag found in this resource");
+        }
 
         tag.insertOrReplaceAttribute(attribute);
     }

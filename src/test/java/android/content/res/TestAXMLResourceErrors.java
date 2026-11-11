@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Malformed input and edge cases for AXMLResource.
@@ -77,5 +78,17 @@ public class TestAXMLResourceErrors {
         AXMLResource manifest = TestAXMLResource.load("large_from_malware.xml");
 
         assertNotNull(manifest.getApplicationTag());
+    }
+
+    @Test
+    public void injectingWithoutApplicationTagGivesAClearError() throws IOException {
+        AXMLResource layout = TestAXMLResource.load("test.xml");
+        android.content.res.chunk.types.Attribute attribute = new android.content.res.chunk.types.Attribute(
+                "android", "name", "test", android.content.res.chunk.AttributeType.STRING, null, layout.getStringSection());
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> layout.injectApplicationAttribute(attribute));
+
+        assertTrue(exception.getMessage().contains("application"), exception.getMessage());
     }
 }
