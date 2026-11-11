@@ -20,9 +20,11 @@ import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.PoolItem;
 import android.content.res.chunk.types.NameSpace;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -109,28 +111,48 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
             currentStreamPosition = targetOffset;
         }
 
-        int length = 0;
+        String value;
         if ((flags & UTF8_FLAG) != 0) {
-            length = inputReader.readByte();
+            // UTF-8 pools store the length in UTF-16 units, then the length in bytes; each is 1 or 2 bytes
+            int utf16Length = inputReader.readByte();
             currentStreamPosition += 1;
-        } else {
-            length = inputReader.readShort();
-            currentStreamPosition += 2;
-        }
-
-        StringBuilder result = new StringBuilder(length);
-        for (; length != 0; length -= 1) {
-            if ((flags & UTF8_FLAG) != 0) {
-                result.append((char) inputReader.readByte());
+            if ((utf16Length & 0x80) != 0) {
+                utf16Length = ((utf16Length & 0x7F) << 8) | inputReader.readByte();
                 currentStreamPosition += 1;
-            } else {
-                result.append((char) inputReader.readShort());
+            }
+
+            int byteLength = inputReader.readByte();
+            currentStreamPosition += 1;
+            if ((byteLength & 0x80) != 0) {
+                byteLength = ((byteLength & 0x7F) << 8) | inputReader.readByte();
+                currentStreamPosition += 1;
+            }
+
+            byte[] data = new byte[byteLength];
+            for (int i = 0; i < byteLength; i++) {
+                data[i] = (byte) inputReader.readByte();
+            }
+            currentStreamPosition += byteLength;
+            value = new String(data, StandardCharsets.UTF_8);
+        } else {
+            // UTF-16 pools store the length in UTF-16 units; lengths over 0x7FFF use two shorts
+            int length = inputReader.readShort();
+            currentStreamPosition += 2;
+            if ((length & 0x8000) != 0) {
+                length = ((length & 0x7FFF) << 16) | inputReader.readShort();
                 currentStreamPosition += 2;
             }
+
+            StringBuilder result = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
+                result.append((char) inputReader.readShort());
+            }
+            currentStreamPosition += length * 2;
+            value = result.toString();
         }
 
         // Store the result temporarily
-        results[index] = result.toString();
+        results[index] = value;
     }
 
     // Assign results back to the pool items in the original order
@@ -182,19 +204,8 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
     @Override
     public int getSize() {
         int stringDataSize = 0;
-        int previousSize;
         for (PoolItem item : stringChunkPool) {
-            previousSize = stringDataSize;
-            // TODO: This is potentially wrong
-            // length identifier
-            stringDataSize += ((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1;
-            // actual string data
-            stringDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
-            // buffer
-            int bufferSize = 4 - (stringDataSize - previousSize) % 4;
-            if (bufferSize > 0 && bufferSize < 4) {
-                stringDataSize += bufferSize;
-            }
+            stringDataSize += encodeString(item.getString()).length;
         }
 
         int styleDataSize = 0;
@@ -223,62 +234,13 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
         ByteBuffer offsetBuffer = ByteBuffer.allocate(stringChunkPool.size() * 4)
                 .order(ByteOrder.LITTLE_ENDIAN);
         int offset = 0;
-        int previousOffset;
         ArrayList<byte[]> stringData = new ArrayList<>();
         for (PoolItem item : stringChunkPool) {
             offsetBuffer.putInt(offset);
-            previousOffset = offset;
 
-            // TODO : Ensure this is properly handled, potentially a ULEB128?
-            // Add string length bytes
-            if (item.getString().length() > 255) {
-                System.err.println("Error, string length is greater than the current expected lengths!");
-            }
-            offset += ((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1;
-
-            // Add length of string based on if UTF-8 flag is enabled
-            offset += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
-
-            // Add buffer
-            int bufferSize = 4 - ((offset - previousOffset) % 4);
-            if (bufferSize > 0 && bufferSize < 4) {
-                offset += bufferSize;
-            }
-
-            // Append actual length + data
-            ByteBuffer length;
-            if ((stringChunkFlags & UTF8_FLAG) == 0) {
-                length = ByteBuffer.allocate(2)
-                        .order(ByteOrder.LITTLE_ENDIAN)
-                        .putShort((short) item.getString().length());
-            } else {
-                length = ByteBuffer.allocate(1)
-                        .put((byte) item.getString().length());
-            }
-
-            ByteBuffer string = ByteBuffer.allocate(item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1))
-                    .order(ByteOrder.LITTLE_ENDIAN);
-            for (byte character : item.getString().getBytes()) {
-                if ((stringChunkFlags & UTF8_FLAG) == 0) {
-                    string.putShort(character);
-                } else {
-                    string.put(character);
-                }
-            }
-
-            ByteBuffer stringDataBuffer = ByteBuffer.allocate(offset - previousOffset)
-                    .order(ByteOrder.LITTLE_ENDIAN)
-                    .put(length.array())
-                    .put(string.array());
-
-            if (bufferSize > 0 && bufferSize < 4) {
-                // TODO : fix this
-                byte[] buffer = new byte[bufferSize];
-                Arrays.fill(buffer, (byte) 0x00);
-                stringDataBuffer.put(buffer);
-            }
-
-            stringData.add(stringDataBuffer.array());
+            byte[] encoded = encodeString(item.getString());
+            offset += encoded.length;
+            stringData.add(encoded);
         }
 
         // Combine strings into one buffer
@@ -322,5 +284,52 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
                 .put(strings)
 //                .put(styles)
                 .array();
+    }
+
+    private boolean isUtf8() {
+        return (stringChunkFlags & UTF8_FLAG) != 0;
+    }
+
+    /**
+     * Encodes a single pool string: length prefix, character data, null terminator, then zero padding so the next
+     * string starts on a 4 byte boundary.
+     */
+    private byte[] encodeString(String string) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        if (isUtf8()) {
+            byte[] data = string.getBytes(StandardCharsets.UTF_8);
+            writeUtf8Length(out, string.length());
+            writeUtf8Length(out, data.length);
+            out.write(data, 0, data.length);
+            out.write(0);
+        } else {
+            int length = string.length();
+            if (length > 0x7FFF) {
+                int high = 0x8000 | (length >>> 16);
+                out.write(high & 0xFF);
+                out.write((high >>> 8) & 0xFF);
+            }
+            out.write(length & 0xFF);
+            out.write((length >>> 8) & 0xFF);
+            byte[] data = string.getBytes(StandardCharsets.UTF_16LE);
+            out.write(data, 0, data.length);
+            out.write(0);
+            out.write(0);
+        }
+
+        while (out.size() % 4 != 0) {
+            out.write(0);
+        }
+        return out.toByteArray();
+    }
+
+    private static void writeUtf8Length(ByteArrayOutputStream out, int length) {
+        if (length > 0x7FFF) {
+            throw new IllegalArgumentException("String is too long for a UTF-8 string pool: " + length);
+        }
+        if (length > 0x7F) {
+            out.write(0x80 | (length >>> 8));
+        }
+        out.write(length & 0xFF);
     }
 }

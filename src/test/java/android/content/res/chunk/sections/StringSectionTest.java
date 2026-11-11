@@ -34,15 +34,14 @@ public class StringSectionTest {
                 0x00, // item 1 offset
                 0x08); // item 2 offset
         when(mockReader.readByte()).thenReturn(
-                0x04, // item 1 length
+                0x04, // item 1 length (UTF-16 units)
+                0x04, // item 1 length (UTF-8 bytes)
                 0x64, // d
                 0x69, // i
                 0x66, // f
                 0x66, // f
-                // 0x00, // buffer
-                // 0x00, // buffer
-                // 0x00, // buffer
-                0x03, // item 2 length
+                0x03, // item 2 length (UTF-16 units)
+                0x03, // item 2 length (UTF-8 bytes)
                 0x74, // t
                 0x69, // i
                 0x6D); // m
@@ -58,7 +57,7 @@ public class StringSectionTest {
                 // STRING_SECTION
                 (byte) 0x01, (byte) 0x00, (byte) 0x1C, (byte) 0x00,
                 // size
-                (byte) (12 * 4), (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                (byte) (13 * 4), (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 // string count
                 (byte) 0x02, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 // style count (styles are covered separately once a sample with styles exists)
@@ -73,14 +72,12 @@ public class StringSectionTest {
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 // string pool offsets - item 2
                 (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                // string data - item 1
-                // len(diff)           d            i            f
-                (byte) 0x04, (byte) 0x64, (byte) 0x69, (byte) 0x66,
-                //        f   (buffer ----------------------------)
-                (byte) 0x66, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                // string data - item 2
-                // len(tim)           t            i            m
-                (byte) 0x03, (byte) 0x74, (byte) 0x69, (byte) 0x6d
+                // string data - item 1: len(UTF-16 units), len(UTF-8 bytes), "diff", terminator, padding
+                (byte) 0x04, (byte) 0x04, (byte) 0x64, (byte) 0x69,
+                (byte) 0x66, (byte) 0x66, (byte) 0x00, (byte) 0x00,
+                // string data - item 2: len(UTF-16 units), len(UTF-8 bytes), "tim", terminator, padding
+                (byte) 0x03, (byte) 0x03, (byte) 0x74, (byte) 0x69,
+                (byte) 0x6d, (byte) 0x00, (byte) 0x00, (byte) 0x00
         };
 
         byte[] actual = underTest.toBytes();

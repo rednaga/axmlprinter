@@ -100,4 +100,51 @@ public final class TestUtil {
     public static byte[] utf8(String value) {
         return value.getBytes(StandardCharsets.UTF_8);
     }
+
+    private static void putUtf8Length(ByteBuffer buffer, int length) {
+        if (length > 0x7F) {
+            buffer.put((byte) (0x80 | (length >> 8)));
+        }
+        buffer.put((byte) (length & 0xFF));
+    }
+
+    private static int utf8LengthSize(int length) {
+        return length > 0x7F ? 2 : 1;
+    }
+
+    /** Bytes of a UTF-8 string pool chunk (including the chunk type), laid out as AOSP does. */
+    public static byte[] utf8StringPool(String... strings) {
+        int count = strings.length;
+        byte[][] encoded = new byte[count][];
+        int dataTotal = 0;
+        for (int i = 0; i < count; i++) {
+            encoded[i] = utf8(strings[i]);
+            dataTotal += utf8LengthSize(strings[i].length()) + utf8LengthSize(encoded[i].length) + encoded[i].length + 1;
+        }
+        int padding = (4 - (dataTotal % 4)) % 4;
+
+        int stringsStart = 7 * 4 + count * 4;
+        int size = stringsStart + dataTotal + padding;
+
+        ByteBuffer buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(ChunkType.STRING_SECTION.getIntType());
+        buffer.putInt(size);
+        buffer.putInt(count);
+        buffer.putInt(0); // style count
+        buffer.putInt(0x100); // UTF-8 flag
+        buffer.putInt(stringsStart);
+        buffer.putInt(0); // styles start
+        int offset = 0;
+        for (int i = 0; i < count; i++) {
+            buffer.putInt(offset);
+            offset += utf8LengthSize(strings[i].length()) + utf8LengthSize(encoded[i].length) + encoded[i].length + 1;
+        }
+        for (int i = 0; i < count; i++) {
+            putUtf8Length(buffer, strings[i].length());
+            putUtf8Length(buffer, encoded[i].length);
+            buffer.put(encoded[i]);
+            buffer.put((byte) 0);
+        }
+        return buffer.array();
+    }
 }
