@@ -58,11 +58,12 @@ tasks.jar {
     }
     
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
-    processResources {
-        inputs.property('version', version)
-        expand('version': version)
-    }
+// Fills in the version in axmlprinter.properties, which the command line tool prints
+processResources {
+    inputs.property('version', version)
+    expand('version': version)
 }
 
 publishing {
