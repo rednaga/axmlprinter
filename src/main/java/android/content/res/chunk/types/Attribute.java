@@ -52,6 +52,17 @@ public class Attribute implements Chunk {
     private int attributeType;
     private int data;
 
+    /**
+     * Creates a new attribute, the strings are looked up in (or for string values, added to) the string section.
+     *
+     * @param uri         the namespace <b>URI</b>, for example "http://schemas.android.com/apk/res/android" (not
+     *                    the prefix "android"), or null for no namespace. It has to already be in the string pool
+     * @param name        the attribute name, which has to already be in the string pool
+     * @param stringData  the value if the type is {@link AttributeType#STRING}
+     * @param type        the type of the value
+     * @param data        the value if the type isn't a string, for example an Integer
+     * @param stringSection the string section of the resource this attribute will be added to
+     */
     public Attribute(String uri,
                      String name,
                      String stringData,
