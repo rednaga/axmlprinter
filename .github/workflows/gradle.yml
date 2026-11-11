@@ -21,30 +21,30 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v6
       with:
         java-version: '17'
         distribution: 'temurin'
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@dbbdc275be76ac10734476cc723d82dfe7ec6eda # v3.4.2
+      uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
+    # build runs the tests and assembles the jar, jacocoTestReport writes the coverage report
+    - name: Build, test and generate coverage report
+      run: ./gradlew build jacocoTestReport
 
-    - name: Run tests
-      run: ./gradlew test
-
-    - name: Generate coverage report
-      run: ./gradlew jacocoTestReport
-
-    - name: Build JAR
-      run: ./gradlew jar
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v7
+      with:
+        files: build/reports/jacoco/test/jacocoTestReport.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
+        # Don't fail the build if Codecov is down or the token isn't configured
+        fail_ci_if_error: false
 
     - name: Upload JAR as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: axmlprinter-jar
         path: build/libs/*.jar
