@@ -61,17 +61,19 @@ public class AXMLPrinterTest {
     }
 
     @Test
-    public void noArgumentsPrintsUsage() throws Exception {
-        AXMLPrinter.main(new String[0]);
+    public void noArgumentsPrintsUsageAndFails() throws Exception {
+        assertEquals(2, AXMLPrinter.run(new String[0]));
 
-        assertTrue(stdout().startsWith("Usage: AXMLPrinter"));
+        assertTrue(stderr().startsWith("Usage: AXMLPrinter"), stderr());
+        assertTrue(stderr().contains("[output file]"), "usage should mention the optional output file: " + stderr());
+        assertEquals("", stdout());
     }
 
     @Test
     public void versionFlags() throws Exception {
         for (String flag : new String[]{"-v", "-version", "-V"}) {
             out.reset();
-            AXMLPrinter.main(new String[]{flag});
+            assertEquals(0, AXMLPrinter.run(new String[]{flag}));
 
             assertTrue(stdout().startsWith("axmlprinter "), "flag " + flag + " printed: " + stdout());
         }
@@ -79,7 +81,7 @@ public class AXMLPrinterTest {
 
     @Test
     public void missingFileIsReported() throws Exception {
-        AXMLPrinter.main(new String[]{tempDir.resolve("does-not-exist.xml").toString()});
+        assertEquals(1, AXMLPrinter.run(new String[]{tempDir.resolve("does-not-exist.xml").toString()}));
 
         assertTrue(stderr().contains("File not found"));
         assertEquals("", stdout());
@@ -90,7 +92,7 @@ public class AXMLPrinterTest {
         Path tiny = tempDir.resolve("tiny.bin");
         Files.write(tiny, new byte[]{1, 2});
 
-        AXMLPrinter.main(new String[]{tiny.toString()});
+        assertEquals(1, AXMLPrinter.run(new String[]{tiny.toString()}));
 
         assertTrue(stderr().contains("too small"));
     }
@@ -100,14 +102,14 @@ public class AXMLPrinterTest {
         Path unknown = tempDir.resolve("unknown.bin");
         Files.write(unknown, new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0, 0, 0, 0});
 
-        AXMLPrinter.main(new String[]{unknown.toString()});
+        assertEquals(1, AXMLPrinter.run(new String[]{unknown.toString()}));
 
         assertTrue(stderr().contains("Unknown file format"));
     }
 
     @Test
     public void printsXmlForBinaryAxml() throws Exception {
-        AXMLPrinter.main(new String[]{fixture("large_from_malware.xml").toString()});
+        assertEquals(0, AXMLPrinter.run(new String[]{fixture("large_from_malware.xml").toString()}));
 
         String printed = stdout();
         assertTrue(printed.startsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
@@ -119,12 +121,12 @@ public class AXMLPrinterTest {
     public void writesRebuiltAxmlWhenOutputGiven() throws Exception {
         Path output = tempDir.resolve("out.axml");
 
-        AXMLPrinter.main(new String[]{fixture("test.xml").toString(), output.toString()});
+        assertEquals(0, AXMLPrinter.run(new String[]{fixture("test.xml").toString(), output.toString()}));
 
         assertTrue(Files.size(output) > 0);
         // The rebuilt file must itself be printable
         out.reset();
-        AXMLPrinter.main(new String[]{output.toString()});
+        assertEquals(0, AXMLPrinter.run(new String[]{output.toString()}));
         assertTrue(stdout().contains("LinearLayout"));
     }
 
@@ -136,10 +138,61 @@ public class AXMLPrinterTest {
         Path proto = tempDir.resolve("proto.xml");
         Files.write(proto, node.toByteArray());
 
-        AXMLPrinter.main(new String[]{proto.toString(), tempDir.resolve("unused.axml").toString()});
+        assertEquals(0, AXMLPrinter.run(new String[]{proto.toString(), tempDir.resolve("unused.axml").toString()}));
 
         assertTrue(stdout().contains("<manifest"));
         assertTrue(stderr().contains("not supported"));
         assertFalse(Files.exists(tempDir.resolve("unused.axml")));
+    }
+
+    @Test
+    public void truncatedAxmlFailsCleanlyWithoutPrintingPartialXml() throws Exception {
+        byte[] full = Files.readAllBytes(fixture("test.xml"));
+        Path truncated = tempDir.resolve("truncated.axml");
+        Files.write(truncated, java.util.Arrays.copyOf(full, 100));
+
+        assertEquals(1, AXMLPrinter.run(new String[]{truncated.toString()}));
+
+        assertTrue(stderr().startsWith("Error"), stderr());
+        assertFalse(stderr().contains("\tat "), "no stack trace expected: " + stderr());
+        assertEquals("", stdout());
+    }
+
+    @Test
+    public void incompleteAxmlIsAnError() throws Exception {
+        // Just the AXML header chunk, no string or resource sections
+        Path headerOnly = tempDir.resolve("header-only.axml");
+        Files.write(headerOnly, TestUtil.ints(0x00080003, 8));
+
+        assertEquals(1, AXMLPrinter.run(new String[]{headerOnly.toString()}));
+
+        assertTrue(stderr().toLowerCase().contains("incomplete"), stderr());
+        assertEquals("", stdout());
+    }
+
+    @Test
+    public void invalidProtobufIsAnError() throws Exception {
+        Path invalid = tempDir.resolve("invalid.pb");
+        Files.write(invalid, new byte[]{0x0A, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF});
+
+        assertEquals(1, AXMLPrinter.run(new String[]{invalid.toString()}));
+
+        assertTrue(stderr().startsWith("Error"), stderr());
+    }
+
+    @Test
+    public void directoryInsteadOfFileIsAnError() throws Exception {
+        assertEquals(1, AXMLPrinter.run(new String[]{tempDir.toString()}));
+
+        assertTrue(stderr().startsWith("Error"), stderr());
+    }
+
+    @Test
+    public void unwritableOutputFileIsAnError() throws Exception {
+        Path missingDirectory = tempDir.resolve("no-such-directory").resolve("out.axml");
+
+        assertEquals(1, AXMLPrinter.run(new String[]{fixture("test.xml").toString(), missingDirectory.toString()}));
+
+        assertTrue(stderr().startsWith("Error"), stderr());
     }
 }

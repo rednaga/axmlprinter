@@ -19,6 +19,7 @@ import android.content.res.IntReader;
 import android.content.res.chunk.ChunkType;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -41,8 +42,9 @@ public abstract class GenericChunk implements Chunk {
             size = reader.readInt();
             readHeader(reader);
         } catch (IOException exception) {
-            // TODO : Handle this better
-            exception.printStackTrace();
+            // Constructors can't throw checked exceptions without breaking the API, ChunkUtil.createChunk
+            // unwraps this and reports it with the chunk type and offset
+            throw new UncheckedIOException(exception);
         }
     }
 

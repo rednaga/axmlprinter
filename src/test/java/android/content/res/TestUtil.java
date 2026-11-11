@@ -147,4 +147,67 @@ public final class TestUtil {
         }
         return buffer.array();
     }
+
+    /**
+     * Bytes of a UTF-16 string pool chunk with styles, laid out as AOSP does: header, string offsets, style
+     * offsets, string data (each string padded to 4 bytes), then the style data.
+     *
+     * @param styles for each style, its spans flattened as (name string index, first char, last char) triples
+     */
+    public static byte[] utf16StringPoolWithStyles(String[] strings, int[][] styles) {
+        int stringCount = strings.length;
+        int styleCount = styles.length;
+
+        java.io.ByteArrayOutputStream stringData = new java.io.ByteArrayOutputStream();
+        int[] stringOffsets = new int[stringCount];
+        for (int i = 0; i < stringCount; i++) {
+            stringOffsets[i] = stringData.size();
+            ByteBuffer one = ByteBuffer.allocate(2 + strings[i].length() * 2 + 2).order(ByteOrder.LITTLE_ENDIAN);
+            one.putShort((short) strings[i].length());
+            for (char c : strings[i].toCharArray()) {
+                one.putShort((short) c);
+            }
+            one.putShort((short) 0);
+            stringData.write(one.array(), 0, one.capacity());
+            while (stringData.size() % 4 != 0) {
+                stringData.write(0);
+            }
+        }
+
+        int[] styleOffsets = new int[styleCount];
+        int styleSize = 0;
+        for (int i = 0; i < styleCount; i++) {
+            styleOffsets[i] = styleSize;
+            styleSize += (styles[i].length + 1) * 4;
+        }
+        styleSize += 2 * 4; // two END sentinels that AOSP appends
+
+        int stringsStart = 7 * 4 + stringCount * 4 + styleCount * 4;
+        int stylesStart = stringsStart + stringData.size();
+        int size = stylesStart + styleSize;
+
+        ByteBuffer buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(ChunkType.STRING_SECTION.getIntType());
+        buffer.putInt(size);
+        buffer.putInt(stringCount);
+        buffer.putInt(styleCount);
+        buffer.putInt(0);
+        buffer.putInt(stringsStart);
+        buffer.putInt(styleCount == 0 ? 0 : stylesStart);
+        for (int offset : stringOffsets) {
+            buffer.putInt(offset);
+        }
+        for (int offset : styleOffsets) {
+            buffer.putInt(offset);
+        }
+        buffer.put(stringData.toByteArray());
+        for (int[] style : styles) {
+            for (int value : style) {
+                buffer.putInt(value);
+            }
+            buffer.putInt(-1); // END
+        }
+        buffer.putInt(-1).putInt(-1);
+        return buffer.array();
+    }
 }

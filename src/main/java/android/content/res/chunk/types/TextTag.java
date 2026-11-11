@@ -16,6 +16,7 @@
 package android.content.res.chunk.types;
 
 import android.content.res.IntReader;
+import android.content.res.XmlFormat;
 import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.sections.ResourceSection;
 import android.content.res.chunk.sections.StringSection;
@@ -68,7 +69,7 @@ public class TextTag extends GenericChunk {
         StringBuffer buffer = new StringBuffer();
 
         buffer.append(indent(indent));
-        buffer.append(stringSection.getString(name));
+        buffer.append(XmlFormat.escape(stringSection.getString(name)));
 
         return buffer.toString();
     }

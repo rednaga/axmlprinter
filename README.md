@@ -25,6 +25,10 @@ Compile the library:
 ./gradlew jar
 ```
 
+This builds the runnable command line jar, `build/libs/axmlprinter-<version>.jar`, which bundles its
+dependencies. The jar that is published for use as a library (`build/library/`) only contains this project's
+classes, and declares protobuf as a normal dependency.
+
 ### Command Line
 
 Run the library:
@@ -50,6 +54,43 @@ java -jar build/libs/axmlprinter-*.jar AndroidManifest.xml output.xml
 java -jar build/libs/axmlprinter-*.jar manifest.pb
 ```
 
+**Exit status:** `0` on success, `1` if the file can't be read, parsed or written (the reason is printed to
+stderr), and `2` for a usage error. Only the XML is written to stdout, so it is safe to redirect.
+
+### Library
+
+The same code can be used from Java. Binary AXML can be read, printed, edited and written back out:
+
+```java
+try (InputStream in = new FileInputStream("AndroidManifest.xml")) {
+    // Throws an IOException if this isn't a complete, valid AXML file
+    AXMLResource manifest = new AXMLResource(in);
+
+    System.out.println(manifest.toXML());
+
+    // Edit it: set android:name on the <application> tag. The namespace URI (not the prefix) and the
+    // attribute name have to already be in the file's string pool.
+    Attribute name = new Attribute("http://schemas.android.com/apk/res/android", "name",
+            "com.example.MyApplication", AttributeType.STRING, null, manifest.getStringSection());
+    manifest.injectApplicationAttribute(name);
+
+    // Write the modified binary AXML back out
+    try (OutputStream out = new FileOutputStream("AndroidManifest.modified.xml")) {
+        manifest.write(out);
+    }
+}
+```
+
+Protocol Buffers XML (from App Bundles) is read-only:
+
+```java
+try (InputStream in = new FileInputStream("manifest.pb")) {
+    System.out.println(new ProtobufXMLResource(in).toXML());
+}
+```
+
+`AXMLResource.injectApplicationAttribute` throws an `IllegalStateException` if there is no `<application>` tag.
+
 
 ## Contributing
 Contributions welcome! Please follow the simple steps;
@@ -62,6 +103,24 @@ Contributions welcome! Please follow the simple steps;
 If this is too much work, feel free to make an issue and upload a patch set for me to evaluate.
 
 ## Revision History
+
+### Unreleased
+ - **Behavior changes**:
+   - The command line tool now exits with a non-zero status on failure (`1`) and usage errors (`2`), and
+     prints the usage to stderr. Errors are a single line instead of a stack trace
+   - Truncated or malformed files now fail with an `IOException` (with the chunk type and byte offset)
+     instead of producing half-built chunks
+   - Attributes of the types float, dimension, fraction, attribute reference and color are now printed (they
+     used to be empty), and flags other than `protectionLevel` are printed as hex
+   - String values and text are XML escaped
+ - **Bug fixes**:
+   - String pools with styles are now read and written correctly (they were corrupted on write)
+   - A crafted string length can no longer cause an `OutOfMemoryError`
+   - `AXMLResource.read` no longer relies on `InputStream.available()`
+   - The protobuf printer chose `%p` for fractions from the wrong bits, and mishandled negative dimensions
+ - **Packaging**: the published library jar no longer bundles protobuf, it is declared as a dependency instead
+   (previously consumers got protobuf twice). The runnable jar for the command line is unchanged
+ - **Housekeeping**: `.github` is no longer gitignored, removed the stale IntelliJ module file
 
 ### v2.1.0
  - **Bug fixes**:

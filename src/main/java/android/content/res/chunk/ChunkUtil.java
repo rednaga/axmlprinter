@@ -21,6 +21,7 @@ import android.content.res.chunk.sections.StringSection;
 import android.content.res.chunk.types.*;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Simple class for reading chunk types.
@@ -34,7 +35,8 @@ public class ChunkUtil {
         int type = reader.readInt();
 
         for (ChunkType chunkType : ChunkType.values()) {
-            if (chunkType.getIntType() == type) {
+            // ATTRIBUTE is a faked type that shares the int 0 with BUFFER, it never appears in a stream
+            if (chunkType != ChunkType.ATTRIBUTE && chunkType.getIntType() == type) {
                 return chunkType;
             }
         }
@@ -71,14 +73,24 @@ public class ChunkUtil {
                         "This may indicate a corrupted or unsupported AXML file.",
                         chunkType, chunkType.getIntType(), positionBeforeRead));
             }
+        } catch (UncheckedIOException wrapped) {
+            throw withContext(wrapped.getCause(), chunkType, positionBeforeRead);
         } catch (IOException e) {
-            // Re-throw with additional context if it's not already enhanced
-            if (e.getMessage() == null || !e.getMessage().contains("byte offset")) {
-                throw new IOException(String.format(
-                    "Error creating chunk of type %s (0x%08X) at byte offset %d: %s",
-                    chunkType, chunkType.getIntType(), positionBeforeRead, e.getMessage()), e);
-            }
-            throw e;
+            throw withContext(e, chunkType, positionBeforeRead);
         }
+    }
+
+    /**
+     * Adds the chunk type and position to an error, unless that has already been done by a nested chunk.
+     */
+    private static IOException withContext(IOException e, ChunkType chunkType, int position) {
+        String message = e.getMessage();
+        if (message != null && message.contains("byte offset")) {
+            return e;
+        }
+        return new IOException(String.format(
+                "Error creating chunk of type %s (0x%08X) at byte offset %d: %s",
+                chunkType, chunkType.getIntType(), position,
+                message != null ? message : e.getClass().getSimpleName()), e);
     }
 }

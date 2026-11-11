@@ -309,58 +309,11 @@ public class ProtobufXMLResource {
     }
 
     private String formatDimension(int value) {
-        // Android dimension encoding: value is in the form (value << 8) | unit
-        float floatValue = complexToFloat(value);
-        int unit = value & 0xf;
-
-        // Validate unit is within expected range (0-5 for standard units)
-        String[] units = {"px", "dp", "sp", "pt", "in", "mm"};
-        String unitStr;
-        if (unit >= 0 && unit < units.length) {
-            unitStr = units[unit];
-        } else {
-            // Invalid unit, default to px but log a warning
-            unitStr = "px";
-            // Note: In a production environment, you might want to log this
-        }
-
-        if (floatValue == (int) floatValue) {
-            return String.format("%d%s", (int) floatValue, unitStr);
-        }
-        return String.format("%s%s", floatValue, unitStr);
+        return XmlFormat.dimension(value);
     }
 
     private String formatFraction(int value) {
-        float floatValue = complexToFloat(value);
-        int type = (value >> 4) & 0x3;
-
-        if (type == 0) {
-            return String.format("%.2f%%", floatValue * 100);
-        } else {
-            return String.format("%.2f%%p", floatValue * 100);
-        }
-    }
-
-    private float complexToFloat(int complex) {
-        int mantissa = (complex >> 8) & 0xffffff;
-        int radix = (complex >> 4) & 0x3;
-
-        float value = mantissa;
-        switch (radix) {
-            case 0: // 23p0
-                break;
-            case 1: // 16p7
-                value /= (1 << 7);
-                break;
-            case 2: // 8p15
-                value /= (1 << 15);
-                break;
-            case 3: // 0p23
-                value /= (1 << 23);
-                break;
-        }
-
-        return value;
+        return XmlFormat.fraction(value);
     }
 
     private String getPrefix(String namespaceUri, Map<String, String> namespaceMap) {
@@ -382,15 +335,7 @@ public class ProtobufXMLResource {
     }
 
     private String escapeXml(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&apos;");
+        return XmlFormat.escape(value);
     }
 
     /**

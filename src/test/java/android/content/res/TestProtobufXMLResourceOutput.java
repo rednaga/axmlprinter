@@ -119,6 +119,9 @@ public class TestProtobufXMLResourceOutput {
                 Arguments.of("dp", Primitive.newBuilder().setDimensionValue((16 << 8) | 1), "16dp"),
                 Arguments.of("sp", Primitive.newBuilder().setDimensionValue((12 << 8) | 2), "12sp"),
                 Arguments.of("px", Primitive.newBuilder().setDimensionValue(5 << 8), "5px"),
+                Arguments.of("fraction of self", Primitive.newBuilder().setFractionValue(((1 << 22) << 8) | (3 << 4)), "50.00%"),
+                Arguments.of("fraction of parent", Primitive.newBuilder().setFractionValue(((1 << 22) << 8) | (3 << 4) | 1), "50.00%p"),
+                Arguments.of("negative dp", Primitive.newBuilder().setDimensionValue(((-4 & 0xFFFFFF) << 8) | 1), "-4dp"),
                 Arguments.of("empty", Primitive.newBuilder().setEmptyValue(Primitive.EmptyType.getDefaultInstance()), ""),
                 Arguments.of("null", Primitive.newBuilder().setNullValue(Primitive.NullType.getDefaultInstance()), "")
         );

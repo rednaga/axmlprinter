@@ -20,6 +20,7 @@ import android.content.res.chunk.ChunkType;
 import android.content.res.chunk.types.GenericChunk;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Generic ChunkSection class for generalizing the reading and minimizing the repetitive code inside of the specific
@@ -37,8 +38,8 @@ public abstract class GenericChunkSection extends GenericChunk implements ChunkS
 
             reader.skip(Math.abs(reader.getBytesRead() - getStartPosition() - size));
         } catch (IOException e) {
-            // Catching this here allows us to continue reading
-            e.printStackTrace();
+            // See GenericChunk, ChunkUtil.createChunk reports this with the chunk type and offset
+            throw new UncheckedIOException(e);
         }
     }
 

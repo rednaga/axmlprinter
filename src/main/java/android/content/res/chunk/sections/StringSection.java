@@ -26,7 +26,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class StringSection extends GenericChunkSection {
@@ -45,7 +44,43 @@ public class StringSection extends GenericChunkSection {
     // FIXME:
     // This likely could just be an ordered array of Strings if the Integer is just ordered and the key..
     private ArrayList<PoolItem> stringChunkPool;
-    private ArrayList<PoolItem> styleChunkPool;
+
+    // Styles are lists of spans (tag name, first char, last char) per string. They're kept in their raw binary
+    // form so a pool with styles can be written back unchanged, see getStyleSpans() for decoding
+    private ArrayList<Integer> styleOffsets;
+    private byte[] styleData;
+
+    /** Size of the chunk type, chunk size and the five static header ints. */
+    private static final int HEADER_SIZE = 7 * 4;
+    private static final int STYLE_END = -1;
+
+    /**
+     * A single style span: the string index of the tag name (for example "b"), and the first and last
+     * character of the string it applies to.
+     */
+    public static final class StyleSpan {
+        private final int nameIndex;
+        private final int firstChar;
+        private final int lastChar;
+
+        public StyleSpan(int nameIndex, int firstChar, int lastChar) {
+            this.nameIndex = nameIndex;
+            this.firstChar = firstChar;
+            this.lastChar = lastChar;
+        }
+
+        public int getNameIndex() {
+            return nameIndex;
+        }
+
+        public int getFirstChar() {
+            return firstChar;
+        }
+
+        public int getLastChar() {
+            return lastChar;
+        }
+    }
 
     public StringSection(ChunkType chunkType, IntReader inputReader) {
         super(chunkType, inputReader);
@@ -61,7 +96,8 @@ public class StringSection extends GenericChunkSection {
         stringChunkPool = new ArrayList<PoolItem>();
 
         styleChunkPoolOffset = inputReader.readInt();
-        styleChunkPool = new ArrayList<PoolItem>();
+        styleOffsets = new ArrayList<Integer>();
+        styleData = new byte[0];
     }
 
     @Override
@@ -70,22 +106,41 @@ public class StringSection extends GenericChunkSection {
             stringChunkPool.add(new PoolItem(inputReader.readInt(), null));
         }
 
-        if (!stringChunkPool.isEmpty()) {
-            readPool(stringChunkPool, stringChunkFlags, inputReader);
-        }
-
-        // TODO : Does this need the flags?
-        // FIXME: This is potentially wrong
+        // The style offsets sit between the string offsets and the string data
         for (int i = 0; i < styleChunkCount; i++) {
-            styleChunkPool.add(new PoolItem(inputReader.readInt(), null));
+            styleOffsets.add(inputReader.readInt());
         }
 
-        if (!styleChunkPool.isEmpty()) {
-            readPool(styleChunkPool, stringChunkFlags, inputReader);
+        if (styleChunkCount > 0) {
+            int padding = stringChunkPoolOffset - (HEADER_SIZE + (stringChunkCount * 4) + (styleChunkCount * 4));
+            if (padding > 0) {
+                inputReader.skip(padding);
+            }
         }
+
+        int stringDataRead = 0;
+        if (!stringChunkPool.isEmpty()) {
+            stringDataRead = readPool(stringChunkPool, stringChunkFlags, inputReader);
+        }
+
+        if (styleChunkCount > 0) {
+            // Skip the terminator/padding after the last string and read the style data up to the end of the chunk
+            int untilStyles = (styleChunkPoolOffset - stringChunkPoolOffset) - stringDataRead;
+            if (untilStyles > 0) {
+                inputReader.skip(untilStyles);
+            }
+
+            // The size comes from the file, so grow with the data actually read rather than allocating it up front
+            ByteArrayOutputStream styles = new ByteArrayOutputStream();
+            for (int i = size - styleChunkPoolOffset; i > 0; i--) {
+                styles.write(inputReader.readByte());
+            }
+            styleData = styles.toByteArray();
+        }
+
     }
 
-private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader) throws IOException {
+private int readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader) throws IOException {
     // Create a list of indices to maintain the original order
     List<Integer> indices = new ArrayList<>();
     for (int i = 0; i < pool.size(); i++) {
@@ -143,7 +198,8 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
                 currentStreamPosition += 2;
             }
 
-            StringBuilder result = new StringBuilder(length);
+            // The length comes straight from the file, so it must not drive the allocation up front
+            StringBuilder result = new StringBuilder(Math.min(length, 1024));
             for (int i = 0; i < length; i++) {
                 result.append((char) inputReader.readShort());
             }
@@ -159,6 +215,8 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
     for (int i = 0; i < pool.size(); i++) {
         pool.get(i).setString(results[i]);
     }
+
+    return currentStreamPosition;
 }
 
     public int getStringIndex(String string) {
@@ -192,8 +250,44 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
         return "";
     }
 
+    public int getStyleCount() {
+        return styleOffsets.size();
+    }
+
+    /**
+     * @return the spans of the style for the string with this index, empty if there is no such style
+     */
+    public List<StyleSpan> getStyleSpans(int index) {
+        List<StyleSpan> spans = new ArrayList<>();
+        if (index < 0 || index >= styleOffsets.size()) {
+            return spans;
+        }
+
+        ByteBuffer data = ByteBuffer.wrap(styleData).order(ByteOrder.LITTLE_ENDIAN);
+        int position = styleOffsets.get(index);
+        while (position >= 0 && position + 4 <= styleData.length) {
+            int name = data.getInt(position);
+            if (name == STYLE_END || position + 12 > styleData.length) {
+                break;
+            }
+            spans.add(new StyleSpan(name, data.getInt(position + 4), data.getInt(position + 8)));
+            position += 12;
+        }
+        return spans;
+    }
+
+    /**
+     * @return the tag names of the style's spans separated by commas (for example "b,i"), empty if there are none
+     */
     public String getStyle(int index) {
-        return styleChunkPool.get(index).getString();
+        StringBuilder names = new StringBuilder();
+        for (StyleSpan span : getStyleSpans(index)) {
+            if (names.length() > 0) {
+                names.append(',');
+            }
+            names.append(getString(span.getNameIndex()));
+        }
+        return names.toString();
     }
 
     @Override
@@ -208,17 +302,11 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
             stringDataSize += encodeString(item.getString()).length;
         }
 
-        int styleDataSize = 0;
-        for (PoolItem item : styleChunkPool) {
-            styleDataSize += item.getString().length() * (((stringChunkFlags & UTF8_FLAG) == 0) ? 2 : 1);
-        }
-
-        return (2 * 4) + // Header
-                (5 * 4) + // static sections
+        return HEADER_SIZE + // Header and static sections
                 (stringChunkPool.size() * 4) + // string table offset size
+                (styleOffsets.size() * 4) + // style table offset size
                 stringDataSize +
-                (styleChunkPool.size() * 4) + // style table offset size
-                styleDataSize;
+                styleData.length;
     }
 
     /*
@@ -230,60 +318,46 @@ private void readPool(ArrayList<PoolItem> pool, int flags, IntReader inputReader
     public byte[] toBytes() {
         byte[] header = super.toBytes();
 
-        // TODO : We need to ensure these are already "sorted"
-        ByteBuffer offsetBuffer = ByteBuffer.allocate(stringChunkPool.size() * 4)
-                .order(ByteOrder.LITTLE_ENDIAN);
-        int offset = 0;
+        int stringCount = stringChunkPool.size();
+        int styleCount = styleOffsets.size();
+
+        ByteBuffer stringOffsets = ByteBuffer.allocate(stringCount * 4).order(ByteOrder.LITTLE_ENDIAN);
         ArrayList<byte[]> stringData = new ArrayList<>();
+        int stringDataSize = 0;
         for (PoolItem item : stringChunkPool) {
-            offsetBuffer.putInt(offset);
+            stringOffsets.putInt(stringDataSize);
 
             byte[] encoded = encodeString(item.getString());
-            offset += encoded.length;
+            stringDataSize += encoded.length;
             stringData.add(encoded);
         }
 
-        // Combine strings into one buffer
-        ByteBuffer stringsBuffer = ByteBuffer.allocate(offsetBuffer.capacity() + offset)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .put(offsetBuffer.array());
-        for (byte[] data : stringData) {
-            stringsBuffer.put(data);
-        }
-        byte[] strings = stringsBuffer.array();
-
-//        byte[] styles = new byte[]{0x00};
-
+        // String data follows both offset tables, and the style data follows the string data
         int newStringChunkOffset = 0;
-        if (!stringChunkPool.isEmpty()) {
-            newStringChunkOffset = (5 * 4) /* header + 3 other ints above it */
-                    + stringChunkPool.size() * 4 /* index table size */
-                    + 8 /* (this space and the style chunk offset */;
+        if (stringCount > 0) {
+            newStringChunkOffset = HEADER_SIZE + (stringCount * 4) + (styleCount * 4);
         }
-
         int newStyleChunkOffset = 0;
-        if (!styleChunkPool.isEmpty()) {
-            newStyleChunkOffset = (6 * 4) /* header + 4 other ints above it */
-                    + styleChunkPool.size() * 4 /* index table size */
-                    + 8 /* (this space and the style chunk offset */;
+        if (styleCount > 0) {
+            newStyleChunkOffset = HEADER_SIZE + (stringCount * 4) + (styleCount * 4) + stringDataSize;
         }
 
-        byte[] body = ByteBuffer.allocate(5 * 4)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .putInt(stringChunkPool.size())
-                .putInt(styleChunkPool.size())
+        ByteBuffer out = ByteBuffer.allocate(getSize()).order(ByteOrder.LITTLE_ENDIAN)
+                .put(header)
+                .putInt(stringCount)
+                .putInt(styleCount)
                 .putInt(stringChunkFlags)
                 .putInt(newStringChunkOffset)
                 .putInt(newStyleChunkOffset)
-                .array();
-
-        return ByteBuffer.allocate(header.length + body.length + strings.length /*+ styles.length*/)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .put(header)
-                .put(body)
-                .put(strings)
-//                .put(styles)
-                .array();
+                .put(stringOffsets.array());
+        for (int styleOffset : styleOffsets) {
+            out.putInt(styleOffset);
+        }
+        for (byte[] data : stringData) {
+            out.put(data);
+        }
+        out.put(styleData);
+        return out.array();
     }
 
     private boolean isUtf8() {
