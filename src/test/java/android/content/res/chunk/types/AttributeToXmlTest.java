@@ -98,4 +98,24 @@ public class AttributeToXmlTest {
 
         assertEquals(java.util.Arrays.toString(TestUtil.ints(values)), java.util.Arrays.toString(attribute.toBytes()));
     }
+
+    @Test
+    public void namespacePrefixWhenUriIsStringIndexOne() throws Exception {
+        // Indices: 0 name, 1 uri, 2 prefix
+        StringSection pool = TestUtil.stringSection("name", "http://schemas.android.com/apk/res/android", "android");
+        NameSpace namespace = new NameSpace(ChunkType.START_NAMESPACE, TestUtil.reader(0x18, 1, -1, 2, 1));
+        Attribute attribute = new Attribute(TestUtil.reader(1, 0, -1, AttributeType.INT.getIntType(), 5));
+
+        assertEquals("android:name=\"5\"", attribute.toXML(pool, null, Collections.singletonList(namespace), 0));
+    }
+
+    @Test
+    public void namespacePrefixWhenUriIsStringIndexZero() throws Exception {
+        // Indices: 0 uri, 1 prefix, 2 name
+        StringSection pool = TestUtil.stringSection("http://schemas.android.com/apk/res/android", "android", "name");
+        NameSpace namespace = new NameSpace(ChunkType.START_NAMESPACE, TestUtil.reader(0x18, 1, -1, 1, 0));
+        Attribute attribute = new Attribute(TestUtil.reader(0, 2, -1, AttributeType.INT.getIntType(), 5));
+
+        assertEquals("android:name=\"5\"", attribute.toXML(pool, null, Collections.singletonList(namespace), 0));
+    }
 }

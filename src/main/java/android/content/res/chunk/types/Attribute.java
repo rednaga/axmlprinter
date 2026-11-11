@@ -132,7 +132,7 @@ public class Attribute implements Chunk {
     @Override
     public String toXML(StringSection stringSection, ResourceSection resourceSection, List<NameSpace> namespaceList, int indent) {
         StringBuffer buffer = new StringBuffer();
-        if ((uri - 1) > 0) {
+        if (uri >= 0) {
             for (NameSpace nameSpace : namespaceList) {
                 if (nameSpace.getUri() == uri) {
                     buffer.append(stringSection.getString(nameSpace.getPrefix()));
