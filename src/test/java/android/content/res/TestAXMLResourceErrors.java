@@ -131,4 +131,17 @@ public class TestAXMLResourceErrors {
                 new AXMLResource(new ByteArrayInputStream(data)).toXML(),
                 new AXMLResource(new ByteArrayInputStream(padded)).toXML());
     }
+
+    @Test
+    public void zeroPaddingBetweenChunksIsSkipped() throws IOException {
+        byte[] data = fixtureBytes("test.xml");
+        // Insert a zero int (a BUFFER chunk) straight after the 8 byte AXML header chunk
+        byte[] padded = new byte[data.length + 4];
+        System.arraycopy(data, 0, padded, 0, 8);
+        System.arraycopy(data, 8, padded, 12, data.length - 8);
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                new AXMLResource(new ByteArrayInputStream(data)).toXML(),
+                new AXMLResource(new ByteArrayInputStream(padded)).toXML());
+    }
 }
